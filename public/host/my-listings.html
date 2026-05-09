@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — My Listings</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/host/my-listings.html">🏠 StayEZ</a>
+    <nav>
+      <a href="/host/my-listings.html">My Listings</a>
+      <a href="/host/create-listing.html">+ New Listing</a>
+      <a href="/host/booking-requests.html">Booking Requests</a>
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>My Listings</h1>
+    <a href="/host/create-listing.html" class="btn btn-primary" style="margin-bottom:1.5rem;">+ Add New Listing</a>
+    <div id="listings-container"><p>Loading...</p></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth("host");
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    async function loadMyListings() {
+      try {
+        // TODO: GET /api/listings then filter by hostId === current user's ID
+        // OR: create a dedicated GET /api/listings/mine route on the backend
+        const all = await apiFetch("/listings");
+        const user = getUser();
+        const mine = all.filter(l => l.hostId?._id === user._id || l.hostId === user._id);
+        renderListings(mine);
+      } catch (err) {
+        document.getElementById("listings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+      }
+    }
+
+    function renderListings(listings) {
+      const container = document.getElementById("listings-container");
+      if (!listings.length) { container.innerHTML = "<p>You have no listings yet.</p>"; return; }
+      // TODO: Render each listing with Edit and Delete buttons
+      container.innerHTML = listings.map(l => `
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3>${l.name}</h3>
+            <p>${l.type} · ${l.location} · ₱${l.price}/night</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-secondary" onclick="editListing('${l._id}')">Edit</button>
+            <button class="btn btn-danger"    onclick="deleteListing('${l._id}')">Delete</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function deleteListing(id) {
+      if (!confirm("Delete this listing?")) return;
+      try {
+        // TODO: Call DELETE /api/listings/:id
+        await apiFetch(`/listings/${id}`, { method: "DELETE" });
+        loadMyListings();
+      } catch (err) { alert(err.message); }
+    }
+
+    function editListing(id) {
+      // TODO: Redirect to an edit page or open a modal pre-filled with listing data
+      alert(`TODO: open edit form for listing ${id}`);
+    }
+
+    loadMyListings();
+  </script>
+</body>
+</html>

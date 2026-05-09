@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — Browse Listings</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/guest/browse.html">🏠 StayEZ</a>
+    <nav>
+      <a href="/guest/browse.html">Browse</a>
+      <a href="/guest/my-bookings.html">My Bookings</a>
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Browse Listings</h1>
+
+    <!-- Search / Filter / Sort bar -->
+    <div class="filter-bar">
+      <input id="search-input" type="text" placeholder="Search by name..." />
+      <input id="location-input" type="text" placeholder="Filter by location..." />
+      <select id="type-select">
+        <option value="">All Types</option>
+        <option value="hotel">Hotel</option>
+        <option value="apartment">Apartment</option>
+        <option value="dorm">Dorm</option>
+        <option value="guest_room">Guest Room</option>
+        <!-- TODO: Add more types if needed -->
+      </select>
+      <select id="sort-select">
+        <option value="">Sort by Price</option>
+        <option value="price_asc">Price: Low to High</option>
+        <option value="price_desc">Price: High to Low</option>
+      </select>
+      <button id="filter-btn" class="btn btn-primary">Search</button>
+    </div>
+
+    <!-- Listings grid — populated by JS -->
+    <div id="listings-container" class="listing-grid">
+      <p>Loading listings...</p>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth("guest");
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    /**
+     * TODO: Build query string from filter inputs and call GET /api/listings
+     * TODO: Render each listing as a card inside #listings-container
+     * Each card should show: image, name, type, location, price
+     * Each card should have a "Book Now" button that links to /guest/booking.html?id=<listingId>
+     */
+    async function loadListings() {
+      const search   = document.getElementById("search-input").value;
+      const location = document.getElementById("location-input").value;
+      const type     = document.getElementById("type-select").value;
+      const sort     = document.getElementById("sort-select").value;
+
+      const params = new URLSearchParams();
+      if (search)   params.set("search",   search);
+      if (location) params.set("location", location);
+      if (type)     params.set("type",     type);
+      if (sort)     params.set("sort",     sort);
+
+      try {
+        // TODO: Replace with real API call
+        const listings = await apiFetch(`/listings?${params.toString()}`);
+        renderListings(listings);
+      } catch (err) {
+        document.getElementById("listings-container").innerHTML =
+          `<p class="msg-error">${err.message}</p>`;
+      }
+    }
+
+    function renderListings(listings) {
+      const container = document.getElementById("listings-container");
+      if (!listings.length) {
+        container.innerHTML = "<p>No listings found.</p>";
+        return;
+      }
+      // TODO: Build and insert listing card HTML for each listing
+      container.innerHTML = listings.map(l => `
+        <div class="card listing-card">
+          <img src="${l.image || 'https://via.placeholder.com/280x180?text=No+Image'}" alt="${l.name}" />
+          <h3>${l.name}</h3>
+          <p>${l.type} · ${l.location}</p>
+          <p><strong>₱${l.price}/night</strong></p>
+          <a href="/guest/booking.html?id=${l._id}" class="btn btn-primary">Book Now</a>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("filter-btn").addEventListener("click", loadListings);
+    loadListings(); // Initial load
+  </script>
+</body>
+</html>

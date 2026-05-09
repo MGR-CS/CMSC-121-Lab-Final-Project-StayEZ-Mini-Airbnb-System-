@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — Admin: Manage Listings</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/admin/manage-listings.html">🏠 StayEZ Admin</a>
+    <nav>
+      <a href="/admin/manage-listings.html">Listings</a>
+      <a href="/admin/all-bookings.html">All Bookings</a>
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Manage All Listings</h1>
+    <div id="listings-container"><p>Loading...</p></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth("admin");
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    async function loadListings() {
+      try {
+        // TODO: GET /api/listings — admin can see all listings
+        const listings = await apiFetch("/listings");
+        renderListings(listings);
+      } catch (err) {
+        document.getElementById("listings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+      }
+    }
+
+    function renderListings(listings) {
+      const container = document.getElementById("listings-container");
+      if (!listings.length) { container.innerHTML = "<p>No listings.</p>"; return; }
+      // TODO: Render listings table with host info and a Delete button for each
+      container.innerHTML = `<table>
+        <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Price</th><th>Host</th><th>Action</th></tr></thead>
+        <tbody>
+          ${listings.map(l => `<tr>
+            <td>${l.name}</td>
+            <td>${l.type}</td>
+            <td>${l.location}</td>
+            <td>₱${l.price}</td>
+            <td>${l.hostId?.name ?? "—"}</td>
+            <td><button class="btn btn-danger" onclick="deleteListing('${l._id}')">Delete</button></td>
+          </tr>`).join("")}
+        </tbody></table>`;
+    }
+
+    async function deleteListing(id) {
+      if (!confirm("Delete this listing?")) return;
+      try {
+        // TODO: DELETE /api/listings/:id
+        await apiFetch(`/listings/${id}`, { method: "DELETE" });
+        loadListings();
+      } catch (err) { alert(err.message); }
+    }
+
+    loadListings();
+  </script>
+</body>
+</html>

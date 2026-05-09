@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — My Bookings</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/guest/browse.html">🏠 StayEZ</a>
+    <nav>
+      <a href="/guest/browse.html">Browse</a>
+      <a href="/guest/my-bookings.html">My Bookings</a>
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>My Bookings</h1>
+    <div id="bookings-container"><p>Loading...</p></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth("guest");
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    async function loadBookings() {
+      try {
+        const bookings = await apiFetch("/bookings/my");
+        const container = document.getElementById("bookings-container");
+        if (!bookings.length) { container.innerHTML = "<p>No bookings yet.</p>"; return; }
+        // TODO: Render table rows for each booking
+        // Contact number must ONLY show when status === "approved"
+        container.innerHTML = `<table>
+          <thead><tr><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Contact</th></tr></thead>
+          <tbody>
+            ${bookings.map(b => `<tr>
+              <td>${b.listingId?.name ?? "—"}</td>
+              <td>${new Date(b.startDate).toLocaleDateString()}</td>
+              <td>${new Date(b.endDate).toLocaleDateString()}</td>
+              <td><span class="badge badge-${b.status}">${b.status}</span></td>
+              <td>${b.status === "approved" ? b.listingId?.contactNumber ?? "N/A" : "—"}</td>
+            </tr>`).join("")}
+          </tbody></table>`;
+      } catch (err) {
+        document.getElementById("bookings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+      }
+    }
+
+    loadBookings();
+  </script>
+</body>
+</html>

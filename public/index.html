@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — Login</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-box">
+      <h1 style="text-align:center; margin-bottom:1.5rem;">🏠 StayEZ</h1>
+
+      <!-- Tab toggle: Login / Register -->
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+        <button id="tab-login" class="btn btn-primary" style="flex:1;">Login</button>
+        <button id="tab-register" class="btn btn-secondary" style="flex:1;">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Login</button>
+        <p id="login-error" class="msg-error" hidden></p>
+      </form>
+
+      <!-- Register Form (hidden by default) -->
+      <form id="register-form" hidden>
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input id="reg-name" type="text" placeholder="Juan dela Cruz" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input id="reg-password" type="password" placeholder="••••••••" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-role">Register as</label>
+          <select id="reg-role">
+            <option value="guest">Guest</option>
+            <option value="host">Host</option>
+            <!-- TODO: Decide whether admin can self-register or is seeded -->
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Register</button>
+        <p id="register-error" class="msg-error" hidden></p>
+        <p id="register-success" class="msg-success" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    // Redirect if already logged in
+    redirectIfLoggedIn();
+
+    // --- Tab toggle ---
+    document.getElementById("tab-login").addEventListener("click", () => {
+      document.getElementById("login-form").hidden = false;
+      document.getElementById("register-form").hidden = true;
+    });
+
+    document.getElementById("tab-register").addEventListener("click", () => {
+      document.getElementById("login-form").hidden = true;
+      document.getElementById("register-form").hidden = false;
+    });
+
+    // --- Login ---
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email    = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+
+      try {
+        // TODO: Call POST /api/auth/login, save session, redirect by role
+        const data = await apiFetch("/auth/login", {
+          method: "POST",
+          body: { email, password },
+        });
+        saveSession(data.token, data.user);
+        redirectIfLoggedIn();
+      } catch (err) {
+        const el = document.getElementById("login-error");
+        el.textContent = err.message;
+        el.hidden = false;
+      }
+    });
+
+    // --- Register ---
+    document.getElementById("register-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name     = document.getElementById("reg-name").value;
+      const email    = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+      const role     = document.getElementById("reg-role").value;
+
+      try {
+        // TODO: Call POST /api/auth/register
+        await apiFetch("/auth/register", {
+          method: "POST",
+          body: { name, email, password, role },
+        });
+        const ok = document.getElementById("register-success");
+        ok.textContent = "Registered! You can now log in.";
+        ok.hidden = false;
+      } catch (err) {
+        const el = document.getElementById("register-error");
+        el.textContent = err.message;
+        el.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

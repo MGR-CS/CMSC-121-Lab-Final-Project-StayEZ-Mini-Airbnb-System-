@@ -1,0 +1,103 @@
+const express = require("express");
+const router = express.Router();
+const Booking = require("../models/Booking");
+const Listing = require("../models/Listing");
+const { protect, authorize } = require("../middleware/auth");
+
+/**
+ * @route   GET /api/bookings/my
+ * @desc    Get all bookings made by the logged-in guest
+ * @access  Private - Guest
+ */
+router.get("/my", protect, authorize("guest"), async (req, res) => {
+  try {
+    // TODO: Find bookings where guestId === req.user._id
+    // TODO: Populate listingId (name, location, type, price)
+    // TODO: For each booking, include contactNumber ONLY if status === "approved"
+    //       (strip it otherwise before sending the response)
+
+    res.status(200).json({ message: "TODO: return guest bookings" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/bookings/host
+ * @desc    Get all booking requests for listings owned by the logged-in host
+ * @access  Private - Host
+ */
+router.get("/host", protect, authorize("host"), async (req, res) => {
+  try {
+    // TODO: Find all listings where hostId === req.user._id
+    // TODO: Find all bookings where listingId is in that set
+    // TODO: Populate guestId (name, email) and listingId (name)
+
+    res.status(200).json({ message: "TODO: return host booking requests" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/bookings
+ * @desc    Get ALL bookings (admin only)
+ * @access  Private - Admin
+ */
+router.get("/", protect, authorize("admin"), async (req, res) => {
+  try {
+    // TODO: Return all bookings, populate listing and guest info
+
+    res.status(200).json({ message: "TODO: return all bookings" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/bookings
+ * @desc    Create a new booking (guest books a listing)
+ * @access  Private - Guest
+ */
+router.post("/", protect, authorize("guest"), async (req, res) => {
+  try {
+    const { listingId, startDate, endDate } = req.body;
+
+    // TODO: Validate that startDate < endDate
+    // TODO: Check for overlapping APPROVED bookings on the same listing:
+    //   Find existing bookings where:
+    //     listingId === listingId
+    //     status    === "approved"
+    //     startDate <  new endDate   (existing starts before new booking ends)
+    //     endDate   >  new startDate (existing ends after new booking starts)
+    //   If any found → return 409 Conflict
+    // TODO: Create booking with guestId = req.user._id, status = "pending"
+
+    res.status(201).json({ message: "TODO: create booking" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @route   PUT /api/bookings/:id/status
+ * @desc    Approve or reject a booking (host only)
+ * @access  Private - Host
+ */
+router.put("/:id/status", protect, authorize("host"), async (req, res) => {
+  try {
+    const { status } = req.body; // expected: "approved" or "rejected"
+
+    // TODO: Find booking by req.params.id
+    // TODO: Ensure the booking's listing belongs to req.user (host ownership check)
+    // TODO: Validate status is "approved" or "rejected"
+    // TODO: If approving, re-run overlap check to avoid race conditions
+    // TODO: Update booking.status and save
+
+    res.status(200).json({ message: "TODO: update booking status" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+module.exports = router;

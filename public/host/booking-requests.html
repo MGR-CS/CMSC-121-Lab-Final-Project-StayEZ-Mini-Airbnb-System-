@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayEZ — Booking Requests</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="navbar">
+    <a class="brand" href="/host/my-listings.html">🏠 StayEZ</a>
+    <nav>
+      <a href="/host/my-listings.html">My Listings</a>
+      <a href="/host/create-listing.html">+ New Listing</a>
+      <a href="/host/booking-requests.html">Booking Requests</a>
+      <a href="#" id="logout-btn">Logout</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>Booking Requests</h1>
+    <div id="requests-container"><p>Loading...</p></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    requireAuth("host");
+    document.getElementById("logout-btn").addEventListener("click", logout);
+
+    async function loadRequests() {
+      try {
+        // TODO: GET /api/bookings/host — returns bookings for this host's listings
+        const bookings = await apiFetch("/bookings/host");
+        renderRequests(bookings);
+      } catch (err) {
+        document.getElementById("requests-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+      }
+    }
+
+    function renderRequests(bookings) {
+      const container = document.getElementById("requests-container");
+      if (!bookings.length) { container.innerHTML = "<p>No booking requests.</p>"; return; }
+      // TODO: Render a table with guest name, listing, dates, status, and Approve/Reject buttons
+      container.innerHTML = `<table>
+        <thead><tr><th>Guest</th><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${bookings.map(b => `<tr>
+            <td>${b.guestId?.name ?? "—"}</td>
+            <td>${b.listingId?.name ?? "—"}</td>
+            <td>${new Date(b.startDate).toLocaleDateString()}</td>
+            <td>${new Date(b.endDate).toLocaleDateString()}</td>
+            <td><span class="badge badge-${b.status}">${b.status}</span></td>
+            <td>
+              ${b.status === "pending" ? `
+                <button class="btn btn-success" onclick="updateStatus('${b._id}','approved')">Approve</button>
+                <button class="btn btn-danger"  onclick="updateStatus('${b._id}','rejected')">Reject</button>
+              ` : "—"}
+            </td>
+          </tr>`).join("")}
+        </tbody></table>`;
+    }
+
+    async function updateStatus(bookingId, status) {
+      try {
+        // TODO: PUT /api/bookings/:id/status with { status }
+        await apiFetch(`/bookings/${bookingId}/status`, { method: "PUT", body: { status } });
+        loadRequests();
+      } catch (err) { alert(err.message); }
+    }
+
+    loadRequests();
+  </script>
+</body>
+</html>
