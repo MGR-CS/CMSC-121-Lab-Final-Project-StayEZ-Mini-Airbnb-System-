@@ -7,18 +7,18 @@
 
 ## Overview
 
-StayEZ is a simplified Airbnb-like web application that simulates a real-world property booking platform. Users can list properties, search and filter listings, and manage bookings — all backed by a Node.js/Express REST API and a MongoDB database.
+(Project Description)
 
 ---
 
-## 👥 Team Members
+## Team Members
 
 | Name | Role |
 |------|------|
+| (Arca, Rome) | |
+| (Bautista, Malcolm) | |
+| (De Leon, Chris) | |
 | (Rites, Mark) | Fullstack developer |
-| (Member 2) | |
-| (Member 3) | |
-| (Member 4) | |
 
 ---
 
@@ -32,7 +32,7 @@ StayEZ is a simplified Airbnb-like web application that simulates a real-world p
 ### Installation
 
 ```bash
-# 0. Clone the repository
+# 0. Clone the repository and cd to the project directory
 git clone https://github.com/MGR-CS/CMSC-121-Lab-Final-Project-StayEZ-Mini-Airbnb-System-.git
 cd CMSC-121-Lab-Final-Project-StayEZ-Mini-Airbnb-System-
 
