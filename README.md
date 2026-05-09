@@ -40,7 +40,7 @@ cd CMSC-121-Lab-Final-Project-StayEZ-Mini-Airbnb-System-
 npm install
 
 # 2. Set up environment variables
-cp .env.example .env
+cp .env
 # Edit .env with your MongoDB URI and JWT secret
 
 # 3. Start the development server
