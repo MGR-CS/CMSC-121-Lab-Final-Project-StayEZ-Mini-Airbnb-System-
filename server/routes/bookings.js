@@ -11,12 +11,24 @@ const { protect, authorize } = require("../middleware/auth");
  */
 router.get("/my", protect, authorize("guest"), async (req, res) => {
   try {
-    // TODO: Find bookings where guestId === req.user._id
-    // TODO: Populate listingId (name, location, type, price)
-    // TODO: For each booking, include contactNumber ONLY if status === "approved"
-    //       (strip it otherwise before sending the response)
+    const guestId = req.user._id;
+    const myBookings = await Booking.find({ guestId: guestId })
+        .populate("listingId")
+        .lean();
 
-    res.status(200).json({ message: "TODO: return guest bookings" });
+    const finalBookings = [];
+
+    for (const match of myBookings) {
+
+      // Strip the contact number if the booking isn't approved yet
+      if (match.status !== "approved" && match.listingId) {
+        delete match.listingId.contactNumber;
+      }
+
+      finalBookings.push(match);
+    }
+
+    res.status(200).json(finalBookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -62,18 +74,29 @@ router.get("/", protect, authorize("admin"), async (req, res) => {
 router.post("/", protect, authorize("guest"), async (req, res) => {
   try {
     const { listingId, startDate, endDate } = req.body;
+    const guestId = req.user._id;
 
-    // TODO: Validate that startDate < endDate
-    // TODO: Check for overlapping APPROVED bookings on the same listing:
-    //   Find existing bookings where:
-    //     listingId === listingId
-    //     status    === "approved"
-    //     startDate <  new endDate   (existing starts before new booking ends)
-    //     endDate   >  new startDate (existing ends after new booking starts)
-    //   If any found → return 409 Conflict
-    // TODO: Create booking with guestId = req.user._id, status = "pending"
+    // we only need one to trigger a conflict
+    const sameListing = await Booking.findOne({
+      listingId: listingId,
+      status: "approved",
+      startDate: { $lt: endDate },
+      endDate: { $gt: startDate }
+    })
 
-    res.status(201).json({ message: "TODO: create booking" });
+    if(sameListing) {
+      res.status(409).json({ message: "Conflicting schedule with another existing booking"})
+    }
+
+    const newBooking = await Booking.create({
+      listingId: listingId,
+      guestId: guestId,
+      startDate: startDate,
+      endDate: endDate,
+      status: "pending",
+    })
+
+    res.status(201).json(newBooking);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
