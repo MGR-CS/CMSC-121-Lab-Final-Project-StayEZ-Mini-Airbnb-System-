@@ -41,11 +41,15 @@ router.get("/my", protect, authorize("guest"), async (req, res) => {
  */
 router.get("/host", protect, authorize("host"), async (req, res) => {
   try {
-    // TODO: Find all listings where hostId === req.user._id
-    // TODO: Find all bookings where listingId is in that set
-    // TODO: Populate guestId (name, email) and listingId (name)
+    const hostListings = await Listing.find({ hostId: req.user._id }).lean();
+    const listingIds = hostListings.map(listing => listing._id);
 
-    res.status(200).json({ message: "TODO: return host booking requests" });
+    const hostBookings = await Booking.find({ listingId: { $in: listingIds } })
+        .populate("guestId", "name email")
+        .populate("listingId", "name")
+        .lean();
+
+    res.status(200).json(hostBookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
