@@ -48,7 +48,6 @@ const listingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// TODO: Add text index on name/location for search optimization if needed
-// listingSchema.index({ name: "text", location: "text" });
+listingSchema.index({ name: "text", location: "text" });
 
 module.exports = mongoose.model("Listing", listingSchema);

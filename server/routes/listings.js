@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Listing = require("../models/Listing");
+const Booking = require("../models/Booking"); // required for the deleting related boookings
 const { protect, authorize } = require("../middleware/auth");
 
 /**
@@ -14,6 +15,29 @@ router.get("/", async (req, res) => {
   try {
     const { search, location, type, sort } = req.query;
     let query = {};
+
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    if(location) {
+      query.location = { $regex: location, $options: "i" };
+    }
+
+    if(type) {
+      query.type = type;
+    }
+
+    let sortObj = {};
+    if (sort === "price_asc") {
+      sortObj = { price: 1 };  // Lowest to highest 📈
+    } else if (sort === "price_desc") {
+      sortObj = { price: -1 }; // Highest to lowest 📉
+    }
+
+    const listings = await Listing.find(query)
+        .sort(sortObj)
+        .populate("hostId", "name");
 
     // TODO: If `search` is provided, filter by name (case-insensitive)
     // e.g., query.name = { $regex: search, $options: "i" };
@@ -29,7 +53,7 @@ router.get("/", async (req, res) => {
     // TODO: Execute query with Listing.find(query).sort(sortObj)
     // TODO: Populate hostId with host name (but NOT contactNumber — that's restricted)
 
-    res.status(200).json({ message: "TODO: return listings" });
+    res.status(200).json(listings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -109,12 +133,26 @@ router.delete(
   authorize("host", "admin"),
   async (req, res) => {
     try {
-      // TODO: Find listing by ID
-      // TODO: Check ownership (host) or admin role
-      // TODO: Delete listing
-      // TODO: Also delete related bookings? (optional, discuss with team)
+      const id = req.params.id;
+      const listing = await Listing.findById(id)
+      const isOwner = req.user._id.toString() === listing.hostId.toString();
+      const isAdmin = req.user.role === "admin";
 
-      res.status(200).json({ message: "TODO: delete listing" });
+      if(!listing) {
+        res.status(404).json({message: "No list found"});
+      }
+
+      if(!isOwner && !isAdmin) {
+        res.status(403).json({message: "Action not permitted"})
+      }
+
+      await Booking.deleteMany({listingId: id});
+      await Listing.deleteOne({ _id: id })
+
+      // TODO: Also delete related bookings? (optional, discuss with team)
+        // Chris: Implementation is done. Haven't discussed with team yet so
+
+      res.status(200).json({ message: "Listing and related booking deleted" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

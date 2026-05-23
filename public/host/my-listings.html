@@ -29,14 +29,22 @@
     document.getElementById("logout-btn").addEventListener("click", logout);
 
     async function loadMyListings() {
+      // try {
+      //   // TODO: GET /api/listings then filter by hostId === current user's ID
+      //   // OR: create a dedicated GET /api/listings/mine route on the backend
+      //   const all = await apiFetch("/listings");
+      //   const user = getUser();
+      //   const mine = all.filter(l => l.hostId?._id === user._id || l.hostId === user._id);
+      //   renderListings(mine);
+      // } catch (err) {
+      //   document.getElementById("listings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+      // }
       try {
-        // TODO: GET /api/listings then filter by hostId === current user's ID
-        // OR: create a dedicated GET /api/listings/mine route on the backend
-        const all = await apiFetch("/listings");
         const user = getUser();
-        const mine = all.filter(l => l.hostId?._id === user._id || l.hostId === user._id);
+        const mine = await apiFetch(`/listings?search=&location=&type=&sort=&hostId=${user._id}`);
         renderListings(mine);
-      } catch (err) {
+      }
+      catch (err) {
         document.getElementById("listings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
       }
     }
