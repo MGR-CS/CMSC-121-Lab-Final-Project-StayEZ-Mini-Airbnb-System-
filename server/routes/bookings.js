@@ -114,14 +114,36 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
 router.put("/:id/status", protect, authorize("host"), async (req, res) => {
   try {
     const { status } = req.body; // expected: "approved" or "rejected"
+    const id = req.params.id;
+    const currentBooking = await Booking.findById(id).populate("listingId");
+    if (!currentBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
 
-    // TODO: Find booking by req.params.id
-    // TODO: Ensure the booking's listing belongs to req.user (host ownership check)
-    // TODO: Validate status is "approved" or "rejected"
-    // TODO: If approving, re-run overlap check to avoid race conditions
-    // TODO: Update booking.status and save
+    const listing = currentBooking.listingId;
+    const isOwner = currentBooking.listingId.hostId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Permission not permitted" });
+    }
 
-    res.status(200).json({ message: "TODO: update booking status" });
+    if (status === "approved") {
+      const conflict = await Booking.findOne({
+        listingId: currentBooking.listingId._id,
+        status: "approved",
+        _id: {$ne: currentBooking._id}, // Not including
+        startDate: {$lt: currentBooking.endDate},
+        endDate: {$gt: currentBooking.startDate}
+      });
+      if (conflict) {
+        return res.status(409).json({message: "Cannot approve: conflicting schedule exists."});
+      }
+    }
+
+    currentBooking.status = status;
+    await currentBooking.save();
+
+    res.status(200).json({ message: "Successfully updated", booking: currentBooking });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
