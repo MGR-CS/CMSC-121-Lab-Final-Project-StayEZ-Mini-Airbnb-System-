@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 /**
  * User Schema
@@ -32,10 +33,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// TODO: Add pre-save hook to hash password with bcryptjs
-// userSchema.pre("save", async function (next) { ... });
+// Everytime a request is sent to mongoose to save data to user db, trigger this function
+userSchema.pre("save", async function (next) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
 
-// TODO: Add method to compare plaintext password with hashed password
-// userSchema.methods.matchPassword = async function (enteredPassword) { ... };
+// Method to see if plaintext password after being put into algorithm matches exactly the saved and encrypted password
+userSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model("User", userSchema);

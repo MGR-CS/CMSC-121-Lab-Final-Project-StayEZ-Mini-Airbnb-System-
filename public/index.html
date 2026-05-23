@@ -83,11 +83,11 @@
       const password = document.getElementById("login-password").value;
 
       try {
-        // TODO: Call POST /api/auth/login, save session, redirect by role
         const data = await apiFetch("/auth/login", {
           method: "POST",
           body: { email, password },
         });
+        // token and user data saved here
         saveSession(data.token, data.user);
         redirectIfLoggedIn();
       } catch (err) {
@@ -106,7 +106,6 @@
       const role     = document.getElementById("reg-role").value;
 
       try {
-        // TODO: Call POST /api/auth/register
         await apiFetch("/auth/register", {
           method: "POST",
           body: { name, email, password, role },
