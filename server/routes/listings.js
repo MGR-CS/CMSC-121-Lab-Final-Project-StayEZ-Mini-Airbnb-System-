@@ -58,14 +58,24 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", protect, authorize("host", "admin"), async (req, res) => {
   try {
-    const { name, type, location, price, description, image, contactNumber } =
-      req.body;
+    const { name, type, location, price, description, image, contactNumber } = req.body;
+    const hostId = req.user._id;
+      if(!name || !type || !location || !price || !contactNumber) {
+        return res.status(400).json({ message: "Please enter all required fields" });
+      }
 
-    // TODO: Validate required fields
-    // TODO: Create listing with hostId = req.user._id
-    // TODO: Return the created listing
+      const list = await Listing.create( {
+        name: name,
+        type: type,
+        location: location,
+        price: price,
+        description: description,
+        image: image,
+        hostId: hostId,
+        contactNumber: contactNumber,
+      })
 
-    res.status(201).json({ message: "TODO: create listing" });
+    res.status(201).json(list);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
