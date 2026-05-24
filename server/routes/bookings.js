@@ -20,6 +20,10 @@ router.get("/my", protect, authorize("guest"), async (req, res) => {
 
     for (const match of myBookings) {
 
+      if (match.listingId) {
+        match.listingId = { ...match.listingId };
+      }
+
       // Strip the contact number if the booking isn't approved yet
       if (match.status !== "approved" && match.listingId) {
         delete match.listingId.contactNumber;
