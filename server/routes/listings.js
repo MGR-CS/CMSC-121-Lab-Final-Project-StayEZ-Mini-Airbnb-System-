@@ -54,7 +54,7 @@ router.get("/:id", async (req, res) => {
   try {
 
     const id = req.params.id;
-    const listing = Listing.findById(id);
+    const listing = await Listing.findById(id);
 
     if(!listing) {
       return res.status(404).json({ message: "Not Found" });
@@ -110,11 +110,12 @@ router.put("/:id", protect, authorize("host", "admin"), async (req, res) => {
     const isAdmin = (req.user.role === "admin");
 
     const listing = await Listing.findById(id);
-    const isOwner = listing.hostId.toString() === req.user._id.toString();
 
     if(!listing) {
       return res.status(404).json({ message: "Not Found" });
     }
+
+    const isOwner = req.user._id.toString() === listing.hostId.toString();
 
     if(!isOwner && !isAdmin) {
       return res.status(403).json({ message: "Action not permitted" });
@@ -130,7 +131,7 @@ router.put("/:id", protect, authorize("host", "admin"), async (req, res) => {
         { new: true }       // This option returns the updated document instead of the old one
     );
 
-    res.status(200).json({ message: "Successfully Updated"}, updatedListing);
+    res.status(200).json({ message: "Successfully Updated", listing: updatedListing }); //  Correct
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -149,12 +150,12 @@ router.delete(
     try {
       const id = req.params.id;
       const listing = await Listing.findById(id)
-      const isOwner = req.user._id.toString() === listing.hostId.toString();
       const isAdmin = req.user.role === "admin";
 
       if(!listing) {
         return res.status(404).json({message: "No list found"});
       }
+      const isOwner = req.user._id.toString() === listing.hostId.toString();
 
       if(!isOwner && !isAdmin) {
         return  res.status(403).json({message: "Action not permitted"})

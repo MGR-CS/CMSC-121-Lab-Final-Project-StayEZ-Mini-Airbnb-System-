@@ -70,15 +70,13 @@
     async function deleteListing(id) {
       if (!confirm("Delete this listing?")) return;
       try {
-        // TODO: Call DELETE /api/listings/:id
         await apiFetch(`/listings/${id}`, { method: "DELETE" });
         loadMyListings();
       } catch (err) { alert(err.message); }
     }
 
     function editListing(id) {
-      // TODO: Redirect to an edit page or open a modal pre-filled with listing data
-      alert(`TODO: open edit form for listing ${id}`);
+      window.location.href = `/host/edit-listing.html?id=${id}`;
     }
 
     loadMyListings();
