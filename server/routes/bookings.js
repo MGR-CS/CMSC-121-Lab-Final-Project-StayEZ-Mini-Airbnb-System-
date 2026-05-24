@@ -1,7 +1,8 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Booking = require("../models/Booking");
-const Listing = require("../models/Listing");
+const Listing = require("../models/Listing"); 
 const { protect, authorize } = require("../middleware/auth");
 
 /**
@@ -81,8 +82,20 @@ router.get("/", protect, authorize("admin"), async (req, res) => {
  */
 router.post("/", protect, authorize("guest"), async (req, res) => {
   try {
-    const { listingId, startDate, endDate } = req.body;
+    const { listingId, startDate, endDate, totalPrice } = req.body;
     const guestId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(listingId)) {
+      return res.status(400).json({ 
+        message: "Invalid database ID format. Mock data detected." 
+      });
+    }
+
+    // If it IS a valid MongoDB ID structure, proceed with the database checks safely:
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
 
     // we only need one to trigger a conflict
     const sameListing = await Booking.findOne({
@@ -95,6 +108,12 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
     if(sameListing) {
       return res.status(409).json({ message: "Conflicting schedule with another existing booking"})
     }
+    const d1 = new Date(startDate);
+    const d2 = new Date(endDate);
+
+    const totalNights = Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+    const nightsStayed = totalNights > 0 ? totalNights : 1;
+    const calculatedTotalPrice = (listing.price || 0) * nightsStayed;
 
     const newBooking = await Booking.create({
       listingId: listingId,
@@ -102,6 +121,7 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
       startDate: startDate,
       endDate: endDate,
       status: "pending",
+      totalPrice: calculatedTotalPrice,
     })
 
     res.status(201).json(newBooking);

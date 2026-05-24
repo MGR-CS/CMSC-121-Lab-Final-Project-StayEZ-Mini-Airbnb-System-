@@ -318,7 +318,7 @@
             guestName: getUser().name,
             startDate, endDate,
             status: 'pending',
-            totalPrice: Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) * selectedListing.price
+            totalPrice
           });
           localStorage.setItem('stayez_bookings', JSON.stringify(bookings));
           showToast('Booking request sent to host!', 'success');

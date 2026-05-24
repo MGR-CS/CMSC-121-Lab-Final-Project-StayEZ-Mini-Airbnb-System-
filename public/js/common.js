@@ -135,7 +135,7 @@ function injectConfirmModal() {
 document.addEventListener('DOMContentLoaded', injectConfirmModal);
 
 function showUIConfirm({ icon, iconBg, title, body, confirmLabel, confirmBg, onConfirm }) {
-  document.getElementById('ui-confirm-icon').textContent = icon;
+  document.getElementById('ui-confirm-icon').innerHTML = icon;
   document.getElementById('ui-confirm-icon').style.background = iconBg || '#FEE2E2';
   document.getElementById('ui-confirm-title').textContent = title;
   document.getElementById('ui-confirm-body').textContent = body;
