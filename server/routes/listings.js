@@ -52,10 +52,16 @@ router.get("/", async (req, res) => {
  */
 router.get("/:id", async (req, res) => {
   try {
-    // TODO: Find listing by req.params.id
-    // TODO: Return 404 if not found
 
-    res.status(200).json({ message: "TODO: return single listing" });
+    const id = req.params.id;
+    const listing = Listing.findById(id);
+
+    if(!listing) {
+      return res.status(404).json({ message: "Not Found" });
+    }
+
+
+    res.status(200).json(listing);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
