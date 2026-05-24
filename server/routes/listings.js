@@ -104,11 +104,33 @@ router.post("/", protect, authorize("host", "admin"), async (req, res) => {
  */
 router.put("/:id", protect, authorize("host", "admin"), async (req, res) => {
   try {
+
+    const { name, type, location, price, description, image, contactNumber } = req.body;
+    const id = req.params.id;
+    const isAdmin = (req.user.role === "admin");
+
+    const listing = await Listing.findById(id);
+    const isOwner = listing.hostId.toString() === req.user._id.toString();
+
+    if(!listing) {
+      return res.status(404).json({ message: "Not Found" });
+    }
+
+    if(!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Action not permitted" });
+    }
+
     // TODO: Find listing by ID
     // TODO: Check that req.user._id === listing.hostId OR req.user.role === "admin"
     // TODO: Update and return the listing
 
-    res.status(200).json({ message: "TODO: update listing" });
+    const updatedListing = await Listing.findByIdAndUpdate(
+        id,
+        { $set: req.body }, // Using req.body directly is cleaner
+        { new: true }       // This option returns the updated document instead of the old one
+    );
+
+    res.status(200).json({ message: "Successfully Updated"}, updatedListing);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
