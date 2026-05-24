@@ -22,7 +22,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      // TODO: Hash password using bcryptjs before saving (use pre-save hook)
     },
     role: {
       type: String,

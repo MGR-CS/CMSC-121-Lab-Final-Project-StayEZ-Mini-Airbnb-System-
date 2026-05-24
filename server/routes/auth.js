@@ -37,14 +37,8 @@ router.post("/register", async (req, res) => {
     })
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "30d",
+      expiresIn: "7d",
     });
-
-
-    // TODO: Validate that required fields are provided
-    // TODO: Check if a user with the same email already exists
-    // TODO: Hash password before saving (already handled in User model pre-save hook)
-    // TODO: Create the user and return a JWT token
 
     res.status(201).json({
       _id: user._id,

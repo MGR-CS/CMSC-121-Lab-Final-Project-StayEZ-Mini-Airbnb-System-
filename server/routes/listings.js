@@ -39,20 +39,6 @@ router.get("/", async (req, res) => {
         .sort(sortObj)
         .populate("hostId", "name");
 
-    // TODO: If `search` is provided, filter by name (case-insensitive)
-    // e.g., query.name = { $regex: search, $options: "i" };
-
-    // TODO: If `location` is provided, filter by location (case-insensitive)
-
-    // TODO: If `type` is provided, filter by type (exact or case-insensitive)
-
-    // TODO: Build sort object
-    // price_asc  → { price: 1 }
-    // price_desc → { price: -1 }
-
-    // TODO: Execute query with Listing.find(query).sort(sortObj)
-    // TODO: Populate hostId with host name (but NOT contactNumber — that's restricted)
-
     res.status(200).json(listings);
   } catch (error) {
     res.status(500).json({ message: error.message });
