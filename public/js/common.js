@@ -143,7 +143,10 @@ function showUIConfirm({ icon, iconBg, title, body, confirmLabel, confirmBg, onC
   okBtn.textContent = confirmLabel || 'Confirm';
   okBtn.style.background = confirmBg || 'var(--danger)';
   _uiConfirmCallback = onConfirm;
-  okBtn.onclick = () => { closeUIConfirm(); if (_uiConfirmCallback) _uiConfirmCallback(); };
+  okBtn.onclick = async () => { 
+  if (_uiConfirmCallback) await _uiConfirmCallback(); // 1. Run the action first 
+  closeUIConfirm();                                   // 2. Hide the modal after it finishes
+  };
   document.getElementById('ui-confirm-modal').style.display = 'flex';
 }
 function closeUIConfirm() {

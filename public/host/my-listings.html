@@ -149,7 +149,7 @@
     grid.innerHTML = myListings.map(listing => `
       <div class="listing-card">
         <div class="listing-image" style="height:180px;">
-          <img src="${listing.image}" onerror="this.src='https://via.placeholder.com/500x300'"/>
+          <img src="${listing.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/500x300';"/>
         </div>
         <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
           <div style="display:inline-block;padding:2px 8px;background:var(--brand-light);color:var(--brand-dark);border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;align-self:flex-start;">${listing.type}</div>
@@ -200,7 +200,7 @@
       description: document.getElementById('form-desc').value.trim()
     };
 
-    if (!data.name || !data.price || !data.location || !data.contactNumber || !data.image) {
+    if (!data.name || !data.price || !data.location || !data.contactNumber) {
       return showToast('Please fill all required fields', 'warning');
     }
 
@@ -258,9 +258,10 @@
           books = books.filter(b => b.listingId !== id);
           localStorage.setItem('stayez_bookings', JSON.stringify(books));
           showToast('Listing deleted (Mock)', 'success');
+        } finally {
+          loadHostListings();
+         }
         }
-        loadHostListings();
-      }
     });
   }
 
