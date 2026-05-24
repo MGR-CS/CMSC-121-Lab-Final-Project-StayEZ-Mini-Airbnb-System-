@@ -1,103 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayEZ — Browse Listings</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Stays | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
-<body>
-  <header class="navbar">
-    <a class="brand" href="/guest/browse.html">🏠 StayEZ</a>
-    <nav>
-      <a href="/guest/browse.html">Browse</a>
-      <a href="/guest/my-bookings.html">My Bookings</a>
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+<body class="bg-gray-50">
 
-  <main class="container">
-    <h1>Browse Listings</h1>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
 
-    <!-- Search / Filter / Sort bar -->
-    <div class="filter-bar">
-      <input id="search-input" type="text" placeholder="Search by name..." />
-      <input id="location-input" type="text" placeholder="Filter by location..." />
-      <select id="type-select">
+<div class="page-content container-lg">
+  <!-- Search/Filter Bar -->
+  <div style="background:white;padding:20px 24px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:32px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--gray-100);">
+    <div style="display:flex;align-items:center;background:var(--gray-50);border-radius:12px;padding:8px 16px;flex:1;min-width:260px;border:1px solid var(--gray-200);">
+      <i class="fas fa-search" style="color:var(--gray-400);margin-right:12px;"></i>
+      <input type="text" id="search-input" placeholder="Search by name or location..." style="border:none;background:transparent;padding:0;font-size:15px;width:100%;box-shadow:none;" onkeyup="if(event.key==='Enter') applyFilters()">
+    </div>
+    
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <select id="filter-type" style="width:160px;padding:10px 14px;" onchange="applyFilters()">
         <option value="">All Types</option>
-        <option value="hotel">Hotel</option>
-        <option value="apartment">Apartment</option>
-        <option value="dorm">Dorm</option>
-        <option value="guest_room">Guest Room</option>
-        <!-- TODO: Add more types if needed -->
+        <option value="villa">Villas</option>
+        <option value="apartment">Apartments</option>
+        <option value="house">Houses</option>
       </select>
-      <select id="sort-select">
-        <option value="">Sort by Price</option>
+      
+      <select id="sort-price" style="width:180px;padding:10px 14px;" onchange="applyFilters()">
+        <option value="">Sort: Recommended</option>
         <option value="price_asc">Price: Low to High</option>
         <option value="price_desc">Price: High to Low</option>
       </select>
-      <button id="filter-btn" class="btn btn-primary">Search</button>
+      
+      <button onclick="applyFilters()" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
     </div>
+  </div>
 
-    <!-- Listings grid — populated by JS -->
-    <div id="listings-container" class="listing-grid">
-      <p>Loading listings...</p>
+  <div id="listings-grid" class="listing-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
+    <!-- Loading Skeletons -->
+    <div class="listing-card skeleton" style="height:320px;"></div>
+    <div class="listing-card skeleton" style="height:320px;"></div>
+    <div class="listing-card skeleton" style="height:320px;"></div>
+  </div>
+</div>
+
+<!-- Listing Detail Modal -->
+<div id="detail-modal" class="modal-overlay" onclick="if(event.target===this) closeDetailModal()">
+  <div class="modal-content" style="width:100%;max-width:860px;display:flex;flex-direction:column;max-height:90vh;position:relative;">
+    <button onclick="closeDetailModal()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><i class="fas fa-times"></i></button>
+    
+    <div style="display:flex;flex-wrap:wrap;height:100%;overflow-y:auto;">
+      <!-- Left side: Image & Info -->
+      <div style="flex:1;min-width:320px;border-right:1px solid var(--gray-100);">
+        <div style="width:100%;height:320px;background:var(--gray-200);">
+          <img id="detail-img" src="" style="width:100%;height:100%;object-fit:cover;" />
+        </div>
+        <div style="padding:32px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div>
+              <div style="display:inline-block;padding:4px 10px;background:var(--brand-light);color:var(--brand-dark);border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:12px;" id="detail-type"></div>
+              <h2 id="detail-name" style="font-size:24px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;"></h2>
+              <p style="color:var(--gray-500);font-size:15px;margin:0;"><i class="fas fa-map-marker-alt" style="margin-right:6px;"></i><span id="detail-loc"></span></p>
+            </div>
+          </div>
+          
+          <div style="padding:20px 0;border-top:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100);margin-bottom:24px;display:flex;gap:24px;">
+            <div>
+              <p style="font-size:13px;color:var(--gray-500);margin:0 0 4px;">Host</p>
+              <p style="font-size:15px;font-weight:600;color:var(--gray-900);margin:0;"><i class="fas fa-user-circle" style="margin-right:6px;color:var(--brand);"></i><span id="detail-host"></span></p>
+            </div>
+          </div>
+          
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">About this place</h3>
+          <p id="detail-desc" style="font-size:15px;color:var(--gray-600);line-height:1.7;margin-bottom:24px;"></p>
+        </div>
+      </div>
+      
+      <!-- Right side: Booking Widget -->
+      <div style="width:360px;padding:32px;background:var(--gray-50);display:flex;flex-direction:column;">
+        <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--gray-200);box-shadow:0 12px 24px rgba(0,0,0,0.04);position:sticky;top:32px;">
+          <div style="margin-bottom:24px;">
+            <span id="detail-price" style="font-size:32px;font-weight:800;color:var(--gray-900);"></span>
+            <span style="font-size:15px;color:var(--gray-500);">/ night</span>
+          </div>
+          
+          <div style="border:1px solid var(--gray-300);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+            <div style="padding:12px;border-bottom:1px solid var(--gray-300);">
+              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-900);margin-bottom:4px;">Check-in</label>
+              <input type="date" id="book-start" style="border:none;padding:0;background:transparent;width:100%;font-size:14px;color:var(--gray-700);outline:none;box-shadow:none;" onchange="calculateTotal()" min=""/>
+            </div>
+            <div style="padding:12px;">
+              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-900);margin-bottom:4px;">Check-out</label>
+              <input type="date" id="book-end" style="border:none;padding:0;background:transparent;width:100%;font-size:14px;color:var(--gray-700);outline:none;box-shadow:none;" onchange="calculateTotal()" min=""/>
+            </div>
+          </div>
+          
+          <div id="booking-summary" style="display:none;margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:15px;color:var(--gray-600);">
+              <span id="calc-nights-text"></span>
+              <span id="calc-nights-price"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding-top:16px;border-top:1px solid var(--gray-200);margin-top:16px;font-size:16px;font-weight:700;color:var(--gray-900);">
+              <span>Total</span>
+              <span id="calc-total"></span>
+            </div>
+          </div>
+          
+          <button id="book-btn" onclick="submitBooking()" class="btn btn-primary" style="width:100%;height:48px;font-size:16px;">Reserve</button>
+          <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-top:16px;">You won't be charged yet</p>
+        </div>
+      </div>
     </div>
-  </main>
+  </div>
+</div>
 
-  <script src="/js/api.js"></script>
-  <script>
-    requireAuth("guest");
-    document.getElementById("logout-btn").addEventListener("click", logout);
+<script>
+  requireAuth('guest');
+  renderHeader('browse');
 
-    /**
-     * TODO: Build query string from filter inputs and call GET /api/listings
-     * TODO: Render each listing as a card inside #listings-container
-     * Each card should show: image, name, type, location, price
-     * Each card should have a "Book Now" button that links to /guest/booking.html?id=<listingId>
-     */
-    async function loadListings() {
-      const search   = document.getElementById("search-input").value;
-      const location = document.getElementById("location-input").value;
-      const type     = document.getElementById("type-select").value;
-      const sort     = document.getElementById("sort-select").value;
+  let currentListings = [];
+  let selectedListing = null;
 
-      const params = new URLSearchParams();
-      if (search)   params.set("search",   search);
-      if (location) params.set("location", location);
-      if (type)     params.set("type",     type);
-      if (sort)     params.set("sort",     sort);
+  // Set minimum dates to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('book-start').min = today;
+  document.getElementById('book-end').min = today;
 
-      try {
-        // TODO: Replace with real API call
-        const listings = await apiFetch(`/listings?${params.toString()}`);
-        renderListings(listings);
-      } catch (err) {
-        document.getElementById("listings-container").innerHTML =
-          `<p class="msg-error">${err.message}</p>`;
+  async function loadListings(params = {}) {
+    const grid = document.getElementById('listings-grid');
+    grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(6);
+    
+    try {
+      // Try real API first
+      currentListings = await apiGetListings(params);
+    } catch (e) {
+      console.warn("API failed", e);
+      // Fallback
+      let all = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      if (params.search) {
+        const s = params.search.toLowerCase();
+        all = all.filter(l => l.name.toLowerCase().includes(s) || l.location.toLowerCase().includes(s));
       }
+      if (params.type) all = all.filter(l => l.type === params.type);
+      if (params.sort === 'price_asc') all.sort((a,b) => a.price - b.price);
+      if (params.sort === 'price_desc') all.sort((a,b) => b.price - a.price);
+      currentListings = all;
     }
 
-    function renderListings(listings) {
-      const container = document.getElementById("listings-container");
-      if (!listings.length) {
-        container.innerHTML = "<p>No listings found.</p>";
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('listings-grid');
+    if (currentListings.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:16px;border:1px dashed var(--gray-300);">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-search" style="font-size:24px;color:var(--gray-400);"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">No stays found</h3>
+          <p style="color:var(--gray-500);font-size:14px;">Try adjusting your search or filters to find what you're looking for.</p>
+          <button onclick="clearFilters()" class="btn btn-secondary mt-4">Clear Filters</button>
+        </div>`;
+      return;
+    }
+
+    // TODO: Favorites backend check. Using localStorage stub for now.
+    const favs = JSON.parse(localStorage.getItem('stayez_favorites_' + getUser()._id) || '[]');
+
+    grid.innerHTML = currentListings.map(listing => {
+      const isFav = favs.includes(listing._id);
+      return `
+        <div class="listing-card" onclick="openDetail('${listing._id}')" style="cursor:pointer;">
+          <div class="listing-image">
+            <img src="${listing.image}" alt="${listing.name}" onerror="this.src='https://via.placeholder.com/500x300?text=No+Image'"/>
+            <button class="heart-btn ${isFav ? 'liked' : ''}" onclick="event.stopPropagation(); toggleFav('${listing._id}', this)">
+              <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+            </button>
+          </div>
+          <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0;line-height:1.4;">${listing.name}</h3>
+            </div>
+            <p style="font-size:14px;color:var(--gray-500);margin:0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
+            <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid var(--gray-100);">
+              <div><span style="font-size:18px;font-weight:800;color:var(--gray-900);">$${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('search-input').value;
+    const type = document.getElementById('filter-type').value;
+    const sort = document.getElementById('sort-price').value;
+    loadListings({ search, type, sort });
+  }
+
+  function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('filter-type').value = '';
+    document.getElementById('sort-price').value = '';
+    applyFilters();
+  }
+
+  // ─── Favorites (localStorage stub) ───
+  function toggleFav(id, btnElement) {
+    const userId = getUser()._id;
+    let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+    if (favs.includes(id)) {
+      favs = favs.filter(f => f !== id);
+      btnElement.classList.remove('liked');
+      btnElement.innerHTML = '<i class="far fa-heart"></i>';
+    } else {
+      favs.push(id);
+      btnElement.classList.add('liked');
+      btnElement.innerHTML = '<i class="fas fa-heart"></i>';
+      showToast('Added to favorites', 'success');
+    }
+    localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
+  }
+
+  // ─── Detail Modal & Booking ───
+  function openDetail(id) {
+    selectedListing = currentListings.find(l => l._id === id);
+    if (!selectedListing) return;
+    
+    document.getElementById('detail-img').src = selectedListing.image;
+    document.getElementById('detail-type').textContent = selectedListing.type;
+    document.getElementById('detail-name').textContent = selectedListing.name;
+    document.getElementById('detail-loc').textContent = selectedListing.location;
+    document.getElementById('detail-host').textContent = selectedListing.hostId?.name || selectedListing.hostId || 'Unknown Host';
+    document.getElementById('detail-desc').textContent = selectedListing.description;
+    document.getElementById('detail-price').textContent = '$' + selectedListing.price;
+    
+    // Reset booking inputs
+    document.getElementById('book-start').value = '';
+    document.getElementById('book-end').value = '';
+    document.getElementById('booking-summary').style.display = 'none';
+    
+    document.getElementById('detail-modal').classList.add('open');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detail-modal').classList.remove('open');
+    selectedListing = null;
+  }
+
+  function calculateTotal() {
+    if (!selectedListing) return;
+    const start = document.getElementById('book-start').value;
+    const end = document.getElementById('book-end').value;
+    const summary = document.getElementById('booking-summary');
+    
+    if (start && end) {
+      const d1 = new Date(start);
+      const d2 = new Date(end);
+      if (d2 <= d1) {
+        document.getElementById('book-end').value = '';
+        summary.style.display = 'none';
+        showToast('Check-out must be after check-in', 'warning');
         return;
       }
-      // TODO: Build and insert listing card HTML for each listing
-      container.innerHTML = listings.map(l => `
-        <div class="card listing-card">
-          <img src="${l.image || 'https://via.placeholder.com/280x180?text=No+Image'}" alt="${l.name}" />
-          <h3>${l.name}</h3>
-          <p>${l.type} · ${l.location}</p>
-          <p><strong>₱${l.price}/night</strong></p>
-          <a href="/guest/booking.html?id=${l._id}" class="btn btn-primary">Book Now</a>
-        </div>
-      `).join("");
+      const nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      const total = nights * selectedListing.price;
+      
+      document.getElementById('calc-nights-text').textContent = `$${selectedListing.price} x ${nights} night${nights>1?'s':''}`;
+      document.getElementById('calc-nights-price').textContent = '$' + total;
+      document.getElementById('calc-total').textContent = '$' + total;
+      summary.style.display = 'block';
+    } else {
+      summary.style.display = 'none';
+    }
+  }
+
+  async function submitBooking() {
+    if (!selectedListing) return;
+    const startDate = document.getElementById('book-start').value;
+    const endDate = document.getElementById('book-end').value;
+    
+    if (!startDate || !endDate) {
+      showToast('Please select dates', 'warning');
+      return;
     }
 
-    document.getElementById("filter-btn").addEventListener("click", loadListings);
-    loadListings(); // Initial load
-  </script>
+    const btn = document.getElementById('book-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    try {
+      // Try real API first
+      await apiCreateBooking({ listingId: selectedListing._id, startDate, endDate });
+      showToast('Booking request sent!', 'success');
+      closeDetailModal();
+    } catch (e) {
+      console.warn("API failed, using mock booking", e);
+      // Fallback
+      if (e.message.includes("Conflicting schedule")) {
+        showToast("Dates not available", "error");
+      } else {
+        const bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+        const conflict = bookings.find(b => 
+          b.listingId === selectedListing._id && 
+          b.status === 'approved' &&
+          b.startDate < endDate && b.endDate > startDate
+        );
+        if (conflict) {
+          showToast('Dates not available', 'error');
+        } else {
+          bookings.push({
+            _id: 'book_' + Date.now(),
+            listingId: selectedListing._id,
+            guestId: getUser()._id,
+            guestName: getUser().name,
+            startDate, endDate,
+            status: 'pending',
+            totalPrice: Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) * selectedListing.price
+          });
+          localStorage.setItem('stayez_bookings', JSON.stringify(bookings));
+          showToast('Booking request sent to host!', 'success');
+          closeDetailModal();
+        }
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Reserve';
+    }
+  }
+
+  // Load immediately
+  loadListings();
+</script>
+
 </body>
 </html>

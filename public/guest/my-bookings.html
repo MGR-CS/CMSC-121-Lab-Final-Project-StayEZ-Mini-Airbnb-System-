@@ -1,55 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayEZ — My Bookings</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Bookings | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
-<body>
-  <header class="navbar">
-    <a class="brand" href="/guest/browse.html">🏠 StayEZ</a>
-    <nav>
-      <a href="/guest/browse.html">Browse</a>
-      <a href="/guest/my-bookings.html">My Bookings</a>
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+<body class="bg-gray-50">
 
-  <main class="container">
-    <h1>My Bookings</h1>
-    <div id="bookings-container"><p>Loading...</p></div>
-  </main>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
 
-  <script src="/js/api.js"></script>
-  <script>
-    requireAuth("guest");
-    document.getElementById("logout-btn").addEventListener("click", logout);
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">My Trips</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">View and manage your upcoming and past reservations</p>
+  </div>
 
-    async function loadBookings() {
-      try {
-        const bookings = await apiFetch("/bookings/my");
-        const container = document.getElementById("bookings-container");
-        if (!bookings.length) { container.innerHTML = "<p>No bookings yet.</p>"; return; }
-        // TODO: Render table rows for each booking
-        // Contact number must ONLY show when status === "approved"
-        container.innerHTML = `<table>
-          <thead><tr><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Contact</th></tr></thead>
-          <tbody>
-            ${bookings.map(b => `<tr>
-              <td>${b.listingId?.name ?? "—"}</td>
-              <td>${new Date(b.startDate).toLocaleDateString()}</td>
-              <td>${new Date(b.endDate).toLocaleDateString()}</td>
-              <td><span class="badge badge-${b.status}">${b.status}</span></td>
-              <td>${b.status === "approved" ? b.listingId?.contactNumber ?? "N/A" : "—"}</td>
-            </tr>`).join("")}
-          </tbody></table>`;
-      } catch (err) {
-        document.getElementById("bookings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
-      }
+  <div id="bookings-container" style="display:flex;flex-direction:column;gap:16px;">
+    <!-- Loading skeleton -->
+    <div class="card skeleton" style="height:140px;border-radius:16px;"></div>
+    <div class="card skeleton" style="height:140px;border-radius:16px;"></div>
+  </div>
+</div>
+
+<script>
+  requireAuth('guest');
+  renderHeader('my-bookings');
+
+  async function loadMyBookings() {
+    const container = document.getElementById('bookings-container');
+    container.innerHTML = '<div class="card skeleton" style="height:140px;border-radius:16px;"></div>'.repeat(3);
+
+    let bookings = [];
+    let listingsMap = {};
+
+    try {
+      bookings = await apiGetMyBookings();
+      // listings populate via api
+      bookings.forEach(b => {
+        if (b.listingId) {
+          listingsMap[b.listingId._id || b.listingId] = b.listingId;
+        }
+      });
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]')
+        .filter(b => b.guestId === getUser()._id);
+      
+      const allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      allListings.forEach(l => listingsMap[l._id] = l);
     }
 
-    loadBookings();
-  </script>
+    if (bookings.length === 0) {
+      container.innerHTML = `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:60px 24px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--gray-50);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-suitcase-rolling" style="font-size:24px;color:var(--gray-400);"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">No trips booked... yet!</h3>
+          <p style="color:var(--gray-500);font-size:14px;margin-bottom:24px;">Time to dust off your bags and start planning your next adventure.</p>
+          <button onclick="window.location.href='/guest/browse.html'" class="btn btn-primary">Start Exploring</button>
+        </div>`;
+      return;
+    }
+
+    // Sort by start date, newest first
+    bookings.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+
+    container.innerHTML = bookings.map(booking => {
+      const listing = listingsMap[booking.listingId._id || booking.listingId] || { name: 'Unknown Listing', location: 'Unknown', image: 'https://via.placeholder.com/150' };
+      const statusBadge = {
+        pending:  '<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending Approval</span>',
+        approved: '<span class="badge badge-approved"><i class="fas fa-check"></i> Confirmed</span>',
+        rejected: '<span class="badge badge-rejected"><i class="fas fa-times"></i> Cancelled</span>'
+      }[booking.status];
+      
+      const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000*60*60*24));
+
+      return `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);display:flex;overflow:hidden;transition:box-shadow 0.2s;">
+          <img src="${listing.image}" style="width:200px;object-fit:cover;flex-shrink:0;" onerror="this.src='https://via.placeholder.com/200x150'"/>
+          <div style="padding:24px;flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin:0 0 6px;">${listing.name}</h3>
+                <p style="font-size:14px;color:var(--gray-500);margin:0 0 16px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
+              </div>
+              ${statusBadge}
+            </div>
+            
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+              <div style="display:flex;gap:32px;">
+                <div>
+                  <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Dates</p>
+                  <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${booking.startDate} → ${booking.endDate} <span style="color:var(--gray-500);font-weight:400;">(${nights} night${nights>1?'s':''})</span></p>
+                </div>
+                ${booking.status === 'approved' && listing.contactNumber ? `
+                <div>
+                  <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Host Contact</p>
+                  <p style="font-size:14px;font-weight:600;color:var(--brand);margin:0;"><i class="fas fa-phone-alt" style="margin-right:6px;"></i>${listing.contactNumber}</p>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  loadMyBookings();
+</script>
+
 </body>
 </html>

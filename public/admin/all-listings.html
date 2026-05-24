@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Listings | Admin StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">All Listings</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Manage every property on the platform</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Listing Name</th>
+        <th>Type</th>
+        <th>Location</th>
+        <th>Host</th>
+        <th>Price/Night</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="admin-listings-tbody">
+      <tr><td colspan="6" style="text-align:center;padding:40px;">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Re-using Listing Modal for Admin -->
+<div id="listing-modal" class="modal-overlay" onclick="if(event.target===this) closeListingModal()">
+  <div class="modal-content" style="width:100%;max-width:600px;padding:32px;position:relative;">
+    <button onclick="closeListingModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--gray-100);border:none;cursor:pointer;"><i class="fas fa-times"></i></button>
+    <h2 style="font-size:24px;font-weight:800;margin:0 0 24px;">Edit Listing (Admin)</h2>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Property Name</label>
+        <input type="text" id="form-name"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Property Type</label>
+        <select id="form-type">
+          <option value="apartment">Apartment</option>
+          <option value="house">House</option>
+          <option value="villa">Villa</option>
+          <option value="condo">Condo</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Price per Night ($)</label>
+        <input type="number" id="form-price" min="1"/>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Location</label>
+        <input type="text" id="form-loc"/>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Contact Number</label>
+        <input type="text" id="form-contact"/>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Image URL</label>
+        <input type="url" id="form-img"/>
+      </div>
+      <div style="grid-column:1/-1;">
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Description</label>
+        <textarea id="form-desc" rows="3"></textarea>
+      </div>
+    </div>
+    
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+      <button onclick="closeListingModal()" class="btn btn-secondary">Cancel</button>
+      <button id="save-listing-btn" onclick="saveListing()" class="btn btn-primary" style="min-width:120px;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  requireAuth('admin');
+  renderHeader('all-listings');
+
+  let allListings = [];
+  let editingListingId = null;
+
+  async function loadListings() {
+    try {
+      allListings = await apiGetListings();
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+    }
+
+    const tbody = document.getElementById('admin-listings-tbody');
+    if (allListings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No listings found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = allListings.map(l => `
+      <tr>
+        <td><b>${l.name}</b></td>
+        <td style="text-transform:capitalize;">${l.type}</td>
+        <td>${l.location}</td>
+        <td>${l.hostId?.name || l.hostId || 'Unknown'}</td>
+        <td>$${l.price}</td>
+        <td style="text-align:right;">
+          <button onclick="openListingModal('${l._id}')" class="btn btn-secondary btn-sm" style="margin-right:8px;"><i class="fas fa-edit"></i> Edit</button>
+          <button onclick="deleteListing('${l._id}')" class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;"><i class="fas fa-trash"></i> Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function openListingModal(id) {
+    editingListingId = id;
+    const listing = allListings.find(l => l._id === id);
+    if (!listing) return;
+    
+    document.getElementById('form-name').value = listing.name;
+    document.getElementById('form-type').value = listing.type;
+    document.getElementById('form-price').value = listing.price;
+    document.getElementById('form-loc').value = listing.location;
+    document.getElementById('form-contact').value = listing.contactNumber || '';
+    document.getElementById('form-img').value = listing.image;
+    document.getElementById('form-desc').value = listing.description;
+    
+    document.getElementById('listing-modal').classList.add('open');
+  }
+
+  function closeListingModal() {
+    document.getElementById('listing-modal').classList.remove('open');
+    editingListingId = null;
+  }
+
+  async function saveListing() {
+    const data = {
+      name: document.getElementById('form-name').value.trim(),
+      type: document.getElementById('form-type').value,
+      price: Number(document.getElementById('form-price').value),
+      location: document.getElementById('form-loc').value.trim(),
+      contactNumber: document.getElementById('form-contact').value.trim(),
+      image: document.getElementById('form-img').value.trim(),
+      description: document.getElementById('form-desc').value.trim()
+    };
+
+    const btn = document.getElementById('save-listing-btn');
+    btn.disabled = true;
+
+    try {
+      await apiUpdateListing(editingListingId, data);
+      showToast('Listing updated successfully!', 'success');
+    } catch (e) {
+      console.warn("API failed, using mock save", e);
+      let all = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      const idx = all.findIndex(l => l._id === editingListingId);
+      if(idx !== -1) all[idx] = { ...all[idx], ...data };
+      localStorage.setItem('stayez_listings', JSON.stringify(all));
+      showToast('Listing updated (Mock)', 'success');
+    } finally {
+      btn.disabled = false;
+      closeListingModal();
+      loadListings();
+    }
+  }
+
+  function deleteListing(id) {
+    showUIConfirm({
+      icon: '<i class="fas fa-trash"></i>',
+      title: 'Delete Listing',
+      body: 'Are you sure you want to delete this listing globally? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        try {
+          await apiDeleteListing(id);
+          showToast('Listing deleted', 'success');
+        } catch (e) {
+          console.warn("API failed, using mock delete", e);
+          let all = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+          all = all.filter(l => l._id !== id);
+          localStorage.setItem('stayez_listings', JSON.stringify(all));
+          showToast('Listing deleted (Mock)', 'success');
+        }
+        loadListings();
+      }
+    });
+  }
+
+  loadListings();
+</script>
+
+</body>
+</html>

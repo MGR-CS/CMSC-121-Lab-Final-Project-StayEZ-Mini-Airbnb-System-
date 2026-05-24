@@ -1,0 +1,3513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StayEZ — Premium Stays Made Easy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --brand: #1B6AFF;
+      --brand-dark: #1254CC;
+      --brand-light: #E8F2FF;
+      --accent: #FF6B35;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-600: #4B5563;
+      --gray-700: #374151;
+      --gray-800: #1F2937;
+      --gray-900: #111827;
+    }
+
+    * { 
+      font-family: 'DM Sans', 'Outfit', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    html { scroll-behavior: smooth; }
+    
+    body {
+      background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+      color: var(--gray-900);
+      min-height: 100vh;
+    }
+
+    .font-serif { font-family: 'DM Serif Display', serif; }
+    .font-display { font-family: 'Outfit', sans-serif; font-weight: 700; }
+
+    /* View System */
+    .view { 
+      display: none !important;
+      opacity: 0; 
+      transition: opacity 0.3s ease-in-out;
+      pointer-events: none;
+    }
+    .view.active { 
+      display: block !important;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    /* Login view needs flex centering when active */
+    #view-login.active {
+      display: flex !important;
+    }
+    /* Landing view needs flex-column when active */
+    #view-landing.active {
+      display: flex !important;
+      flex-direction: column;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(10px); }
+    }
+
+    /* Modal System */
+    .modal-overlay { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.6); 
+      backdrop-filter: blur(4px);
+      z-index: 50; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn 0.3s ease-out; }
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(27,106,255,0.7); } 50% { box-shadow: 0 0 0 8px rgba(27,106,255,0); } }
+
+    /* Badge Styles */
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .badge-pending { background: #FEF3C7; color: #92400E; }
+    .badge-approved { background: #D1FAE5; color: #065F46; }
+    .badge-rejected { background: #FEE2E2; color: #991B1B; }
+    .badge-primary { background: var(--brand-light); color: var(--brand-dark); }
+
+    /* Input Styles */
+    select, input[type="text"], input[type="number"], input[type="date"], input[type="email"], 
+    input[type="password"], input[type="url"], input[type="tel"], textarea {
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      background: white;
+      color: var(--gray-900);
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    select:focus, input:focus, textarea:focus { 
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px var(--brand-light);
+    }
+
+    /* Button Styles */
+    .btn { 
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary { 
+      background: var(--brand);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) { 
+      background: var(--brand-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(27,106,255,0.3);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-900);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--gray-200);
+    }
+
+    .btn-danger { 
+      background: var(--danger);
+      color: white;
+    }
+    .btn-danger:hover:not(:disabled) { 
+      background: #DC2626;
+    }
+
+    .btn-success { 
+      background: var(--success);
+      color: white;
+    }
+    .btn-success:hover:not(:disabled) { 
+      background: #059669;
+    }
+
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+    .btn-icon { padding: 8px; border-radius: 8px; width: 36px; height: 36px; }
+
+    /* Clickable table row */
+    .clickable-row { cursor: pointer; transition: background 0.15s; }
+    .clickable-row:hover { background: var(--gray-50); }
+
+    /* Navigation */
+    .nav-link { 
+      transition: all 0.2s ease;
+      color: var(--gray-500);
+      text-decoration: none;
+      font-weight: 500;
+      padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+    }
+    .nav-link:hover { color: var(--brand); }
+    .nav-link.active-link { 
+      color: var(--brand);
+      border-bottom-color: var(--brand);
+    }
+
+    /* Listing Card */
+    .listing-card {
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      border: 1px solid var(--gray-100);
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .listing-card:hover {
+      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+      transform: translateY(-4px);
+    }
+
+    .listing-image {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      background: linear-gradient(135deg, var(--gray-200), var(--gray-100));
+      overflow: hidden;
+    }
+
+    .listing-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .listing-card:hover .listing-image img {
+      transform: scale(1.05);
+    }
+
+    .heart-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .heart-btn:hover {
+      background: white;
+      transform: scale(1.1);
+    }
+
+    .heart-btn.liked {
+      color: var(--danger);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      background: var(--gray-900);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      max-width: 380px;
+      transform: translateY(120px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.warning { background: var(--warning); }
+
+    /* Dev Mode Badge */
+    .dev-badge {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: rgba(0,0,0,0.85);
+      color: #10B981;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #10B981;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sidebar */
+    .sidebar { 
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+
+    .sidebar-active { 
+      background: var(--brand-light);
+      color: var(--brand);
+      font-weight: 600;
+    }
+
+    .sidebar-link {
+      padding: 12px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .sidebar-link:hover { background: var(--gray-100); }
+
+    /* Header Styles */
+    .hero-section {
+      background: linear-gradient(135deg, var(--brand-light) 0%, rgba(27,106,255,0.05) 100%);
+      border-radius: 16px;
+      padding: 48px 32px;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .hero-section h1 {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--gray-900);
+    }
+
+    .hero-section p {
+      font-size: 16px;
+      color: var(--gray-600);
+      margin-bottom: 0;
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .data-table th {
+      background: var(--gray-50);
+      padding: 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .data-table td {
+      padding: 14px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--gray-50);
+    }
+
+    /* Contact Info */
+    .contact-revealed { 
+      background: #ECFDF5;
+      border: 1px solid #6EE7B7;
+      color: #065F46;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .contact-hidden { 
+      background: var(--gray-50);
+      border: 1px dashed var(--gray-300);
+      color: var(--gray-500);
+      padding: 12px 14px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Stats Grid */
+    .stat-card {
+      background: white;
+      border: 1px solid var(--gray-100);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--brand);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--gray-600);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Search Bar Segment Hover */
+    .search-segment {
+      transition: background 0.15s ease;
+    }
+    .search-segment:hover {
+      background: var(--gray-50) !important;
+    }
+    .search-segment input:focus,
+    .search-segment select:focus {
+      outline: none;
+      box-shadow: none;
+      border: none;
+    }
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .search-pill:hover, .search-pill.active {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    /* Loading State */
+    .skeleton {
+      background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-section {
+        padding: 32px 20px;
+      }
+
+      .hero-section h1 {
+        font-size: 28px;
+      }
+
+      .modal-content {
+        width: 100% !important;
+        max-height: 95vh;
+        overflow-y: auto;
+      }
+
+      .nav-link {
+        font-size: 13px;
+        padding-bottom: 4px;
+      }
+
+      .stat-card {
+        padding: 16px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+
+      .stat-label {
+        font-size: 11px;
+      }
+
+      .data-table {
+        font-size: 12px;
+      }
+
+      .data-table th, .data-table td {
+        padding: 10px;
+      }
+
+      .listing-card {
+        border-radius: 10px;
+      }
+
+      .listing-image {
+        height: 200px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 8px 12px;
+      }
+
+      .dev-badge {
+        font-size: 11px;
+        padding: 8px 10px;
+        bottom: 16px;
+        left: 12px;
+      }
+
+      .toast {
+        left: 12px;
+        right: 12px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  TOAST NOTIFICATION                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="toast" class="toast">
+  <i id="toast-icon" class="fas fa-check-circle"></i>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  DEV MODE BADGE                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="dev-badge" style="cursor:default;">
+  <i class="fas fa-code"></i>
+  <span>LocalStorage Mode</span>
+  <button onclick="localStorage.clear(); location.reload();" style="background:rgba(16,185,129,0.2);border:1px solid #10B981;color:#10B981;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;margin-left:4px;">Reset</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  TOP NAVIGATION                                            -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-6">
+    <!-- Logo -->
+    <span class="font-serif text-2xl text-gray-900 tracking-tight select-none cursor-pointer font-bold" onclick="currentUser && currentUser.id ? goHome() : showView('landing')" title="Go to home">
+      Stay<span style="color:var(--brand)">EZ</span>
+    </span>
+
+    <!-- Main Nav -->
+    <nav id="main-nav" class="flex items-center gap-6 text-sm flex-1 overflow-x-auto"></nav>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-3 shrink-0">
+      <!-- Current Role Badge -->
+      <div id="role-badge" class="hidden items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold"></div>
+      <!-- Logout Button -->
+      <button id="logout-btn" onclick="logout()" class="hidden btn btn-secondary btn-sm" style="gap:6px;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LANDING PAGE                                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-landing" class="view" style="min-height:100vh; display:none; flex-direction:column;">
+
+  <!-- Hero -->
+  <section style="position:relative;min-height:92vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 60%,#1B6AFF22 100%);">
+    <!-- Background image -->
+    <div style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1600&h=900&fit=crop');background-size:cover;background-position:center;opacity:0.35;"></div>
+    <!-- Gradient overlay -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,23,42,0.5) 0%,rgba(15,23,42,0.7) 100%);"></div>
+
+    <div style="position:relative;z-index:2;text-align:center;padding:0 24px;max-width:800px;margin:0 auto;">
+      <!-- Logo mark -->
+      <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:8px 20px;margin-bottom:32px;">
+        <i class="fas fa-home" style="color:#1B6AFF;font-size:16px;"></i>
+        <span style="color:white;font-size:14px;font-weight:700;letter-spacing:1px;">STAYEZ</span>
+      </div>
+
+      <h1 style="font-size:clamp(40px,7vw,80px);font-weight:800;color:white;line-height:1.1;margin-bottom:24px;font-family:'Georgia',serif;">
+        Find Your <span style="color:#60A5FA;">Perfect</span><br>Place to Stay
+      </h1>
+      <p style="font-size:clamp(16px,2.5vw,20px);color:rgba(255,255,255,0.75);max-width:520px;margin:0 auto 40px;line-height:1.7;">
+        Discover handpicked villas, apartments, and beach homes across the Philippines.
+      </p>
+
+      <!-- CTA buttons -->
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <button onclick="showLoginModal('guest')" style="background:#1B6AFF;color:white;border:none;padding:16px 36px;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 32px rgba(27,106,255,0.45);transition:all 0.2s;"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 40px rgba(27,106,255,0.6)';"
+          onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 32px rgba(27,106,255,0.45)';">
+          <i class="fas fa-search" style="margin-right:8px;"></i>Browse Stays
+        </button>
+        <button onclick="showLoginModal('host')" style="background:rgba(255,255,255,0.12);color:white;border:2px solid rgba(255,255,255,0.35);padding:16px 36px;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.22)';"
+          onmouseout="this.style.background='rgba(255,255,255,0.12)';">
+          <i class="fas fa-key" style="margin-right:8px;"></i>Become a Host
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:flex;gap:40px;justify-content:center;margin-top:56px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <p style="font-size:28px;font-weight:800;color:white;margin:0;">500+</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:4px 0 0;">Properties</p>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+        <div style="text-align:center;">
+          <p style="font-size:28px;font-weight:800;color:white;margin:0;">12K+</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:4px 0 0;">Happy Guests</p>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+        <div style="text-align:center;">
+          <p style="font-size:28px;font-weight:800;color:white;margin:0;">4.9★</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:4px 0 0;">Avg Rating</p>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+        <div style="text-align:center;">
+          <p style="font-size:28px;font-weight:800;color:white;margin:0;">80+</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin:4px 0 0;">Cities</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);animation:bounce 2s infinite;">
+      <i class="fas fa-chevron-down" style="color:rgba(255,255,255,0.5);font-size:20px;"></i>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section style="padding:80px 24px;background:white;">
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:60px;">
+        <p style="font-size:13px;font-weight:700;color:#1B6AFF;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;">Why StayEZ</p>
+        <h2 style="font-size:clamp(28px,4vw,44px);font-weight:800;color:#0F172A;margin:0 0 16px;">Everything you need,<br>nothing you don't</h2>
+        <p style="font-size:16px;color:#64748B;max-width:480px;margin:0 auto;">We make finding and booking your perfect stay simple, safe, and stress-free.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px;">
+        <div style="padding:32px;border-radius:20px;border:1.5px solid #E2E8F0;transition:all 0.2s;cursor:pointer;"
+          onclick="showFeatureDetail('verified')"
+          onmouseover="this.style.borderColor='#1B6AFF';this.style.boxShadow='0 8px 32px rgba(27,106,255,0.1)';"
+          onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';">
+          <div style="width:52px;height:52px;border-radius:14px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="fas fa-shield-check" style="color:#1B6AFF;font-size:22px;"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0 0 10px;">Verified Listings</h3>
+          <p style="font-size:14px;color:#64748B;line-height:1.7;margin:0 0 14px;">Every property is reviewed and verified by our team before it goes live.</p>
+          <span style="font-size:12px;color:#1B6AFF;font-weight:700;"><i class="fas fa-chevron-right" style="margin-right:4px;font-size:10px;"></i>Learn more</span>
+        </div>
+        <div style="padding:32px;border-radius:20px;border:1.5px solid #E2E8F0;transition:all 0.2s;cursor:pointer;"
+          onclick="showFeatureDetail('booking')"
+          onmouseover="this.style.borderColor='#1B6AFF';this.style.boxShadow='0 8px 32px rgba(27,106,255,0.1)';"
+          onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';">
+          <div style="width:52px;height:52px;border-radius:14px;background:#F0FDF4;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="fas fa-bolt" style="color:#10B981;font-size:22px;"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0 0 10px;">Instant Booking</h3>
+          <p style="font-size:14px;color:#64748B;line-height:1.7;margin:0 0 14px;">Book in seconds. No back-and-forth, no waiting. Confirmation is immediate.</p>
+          <span style="font-size:12px;color:#10B981;font-weight:700;"><i class="fas fa-chevron-right" style="margin-right:4px;font-size:10px;"></i>Learn more</span>
+        </div>
+        <div style="padding:32px;border-radius:20px;border:1.5px solid #E2E8F0;transition:all 0.2s;cursor:pointer;"
+          onclick="showFeatureDetail('support')"
+          onmouseover="this.style.borderColor='#1B6AFF';this.style.boxShadow='0 8px 32px rgba(27,106,255,0.1)';"
+          onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';">
+          <div style="width:52px;height:52px;border-radius:14px;background:#FEF9C3;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="fas fa-headset" style="color:#D97706;font-size:22px;"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0 0 10px;">24/7 Support</h3>
+          <p style="font-size:14px;color:#64748B;line-height:1.7;margin:0 0 14px;">Our support team is always on standby to help you with anything you need.</p>
+          <span style="font-size:12px;color:#D97706;font-weight:700;"><i class="fas fa-chevron-right" style="margin-right:4px;font-size:10px;"></i>Learn more</span>
+        </div>
+        <div style="padding:32px;border-radius:20px;border:1.5px solid #E2E8F0;transition:all 0.2s;cursor:pointer;"
+          onclick="showFeatureDetail('favorites')"
+          onmouseover="this.style.borderColor='#1B6AFF';this.style.boxShadow='0 8px 32px rgba(27,106,255,0.1)';"
+          onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';">
+          <div style="width:52px;height:52px;border-radius:14px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <i class="fas fa-heart" style="color:#EF4444;font-size:22px;"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0 0 10px;">Save Favorites</h3>
+          <p style="font-size:14px;color:#64748B;line-height:1.7;margin:0 0 14px;">Bookmark properties you love and come back to them whenever you're ready.</p>
+          <span style="font-size:12px;color:#EF4444;font-weight:700;"><i class="fas fa-chevron-right" style="margin-right:4px;font-size:10px;"></i>Learn more</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Host CTA Section -->
+  <section style="padding:80px 24px;background:linear-gradient(135deg,#0F172A,#1E3A5F);">
+    <div style="max-width:900px;margin:0 auto;text-align:center;">
+      <div style="width:64px;height:64px;border-radius:18px;background:rgba(27,106,255,0.2);border:1px solid rgba(27,106,255,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+        <i class="fas fa-key" style="color:#60A5FA;font-size:26px;"></i>
+      </div>
+      <h2 style="font-size:clamp(26px,4vw,42px);font-weight:800;color:white;margin:0 0 16px;">Own a property?<br>Start earning today.</h2>
+      <p style="font-size:16px;color:rgba(255,255,255,0.65);max-width:500px;margin:0 auto 36px;line-height:1.7;">List your space on StayEZ and reach thousands of travelers looking for unique stays across the Philippines.</p>
+      <button onclick="showLoginModal('host')" style="background:#1B6AFF;color:white;border:none;padding:16px 40px;border-radius:50px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 32px rgba(27,106,255,0.4);transition:all 0.2s;"
+        onmouseover="this.style.transform='translateY(-2px)';"
+        onmouseout="this.style.transform='translateY(0)';">
+        <i class="fas fa-plus" style="margin-right:8px;"></i>List Your Property
+      </button>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background:#0F172A;padding:32px 24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+    <p style="color:rgba(255,255,255,0.35);font-size:13px;margin:0;">
+      StayEZ © 2026 · Premium Accommodation Platform · Philippines
+      <span style="margin:0 10px;opacity:0.3;">|</span>
+      <a onclick="showAdminLogin()" style="color:rgba(255,255,255,0.3);cursor:pointer;font-size:12px;text-decoration:none;" onmouseover="this.style.color='rgba(255,255,255,0.6)';" onmouseout="this.style.color='rgba(255,255,255,0.3)';">
+        <i class="fas fa-shield-alt" style="margin-right:4px;"></i>Admin
+      </a>
+    </p>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  GUEST / HOST LOGIN MODAL                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="login-modal" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,0.7);backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:24px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.25);position:relative;">
+    <!-- Close -->
+    <button onclick="closeLoginModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:#F1F5F9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#64748B;z-index:1;">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Tab switcher -->
+    <div style="display:flex;border-bottom:1px solid #E2E8F0;">
+      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:18px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:white;color:#1B6AFF;border-bottom:2px solid #1B6AFF;transition:all 0.15s;">Sign In</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:18px;font-size:14px;font-weight:700;border:none;cursor:pointer;background:white;color:#94A3B8;border-bottom:2px solid transparent;transition:all 0.15s;">Create Account</button>
+    </div>
+
+    <div style="padding:28px;">
+      <!-- Role indicator -->
+      <div id="login-role-indicator" style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:10px 14px;border-radius:10px;"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="auth-login-form">
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Email Address</label>
+          <input type="email" id="login-email-input" placeholder="you@example.com" style="width:100%;"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Password</label>
+          <div style="position:relative;">
+            <input type="password" id="login-password-input" placeholder="Enter your password" style="width:100%;padding-right:44px;" onkeydown="if(event.key==='Enter')doLogin()"/>
+            <button onclick="togglePasswordVis('login-password-input',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94A3B8;font-size:14px;padding:0;">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button onclick="doLogin()" class="btn btn-primary w-full" style="height:48px;font-size:15px;">
+          <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+        <!-- Inline login error -->
+        <div id="login-error-msg" style="display:none;margin-top:12px;padding:11px 14px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;display:none;align-items:center;gap:10px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fas fa-exclamation-circle" style="color:#EF4444;font-size:13px;"></i>
+          </div>
+          <span id="login-error-text" style="font-size:13px;font-weight:600;color:#991B1B;flex:1;"></span>
+        </div>
+        <div id="login-hint" style="margin-top:14px;padding:10px 14px;background:#F8FAFC;border-radius:8px;font-size:12px;color:#64748B;line-height:1.6;"></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="auth-register-form" style="display:none;">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Full Name</label>
+          <input type="text" id="reg-name-input" placeholder="Juan dela Cruz"/>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Email Address</label>
+          <input type="email" id="reg-email-input" placeholder="you@example.com"/>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Password</label>
+          <div style="position:relative;">
+            <input type="password" id="reg-password-input" placeholder="Min. 6 characters" style="padding-right:44px;" onkeydown="if(event.key==='Enter')doRegister()"/>
+            <button onclick="togglePasswordVis('reg-password-input',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94A3B8;font-size:14px;padding:0;">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button onclick="doRegister()" class="btn btn-primary w-full" style="height:48px;font-size:15px;">
+          <i class="fas fa-user-plus"></i> Create Account
+        </button>
+        <!-- Inline register error -->
+        <div id="register-error-msg" style="display:none;margin-top:12px;padding:11px 14px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;align-items:center;gap:10px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="fas fa-exclamation-circle" style="color:#EF4444;font-size:13px;"></i>
+          </div>
+          <span id="register-error-text" style="font-size:13px;font-weight:600;color:#991B1B;flex:1;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ADMIN LOGIN MODAL                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="admin-login-modal" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,0.8);backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:24px;width:100%;max-width:400px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.3);position:relative;">
+    <button onclick="closeAdminModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:#F1F5F9;border:none;cursor:pointer;font-size:14px;color:#64748B;">
+      <i class="fas fa-times"></i>
+    </button>
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#3B0764,#5B21B6);padding:28px 28px 20px;text-align:center;">
+      <div style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <i class="fas fa-shield-alt" style="color:white;font-size:22px;"></i>
+      </div>
+      <h3 style="color:white;font-size:18px;font-weight:800;margin:0 0 4px;">Admin Access</h3>
+      <p style="color:rgba(255,255,255,0.65);font-size:13px;margin:0;">Restricted — authorized personnel only</p>
+    </div>
+    <div style="padding:24px 28px 28px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Admin Email</label>
+        <input type="email" id="admin-email-input" placeholder="admin@stayez.ph"/>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Password</label>
+        <div style="position:relative;">
+          <input type="password" id="admin-password-input" placeholder="Admin password" style="padding-right:44px;" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+          <button onclick="togglePasswordVis('admin-password-input',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94A3B8;font-size:14px;padding:0;">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+      <button onclick="doAdminLogin()" style="width:100%;background:linear-gradient(135deg,#5B21B6,#7C3AED);color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;"
+        onmouseover="this.style.opacity='0.9';" onmouseout="this.style.opacity='1';">
+        <i class="fas fa-lock-open" style="margin-right:8px;"></i>Access Dashboard
+      </button>
+      <!-- Inline admin error -->
+      <div id="admin-error-msg" style="display:none;margin-top:12px;padding:11px 14px;background:#F5F3FF;border:1.5px solid #C4B5FD;border-radius:10px;align-items:center;gap:10px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-shield-alt" style="color:#7C3AED;font-size:12px;"></i>
+        </div>
+        <span id="admin-error-text" style="font-size:13px;font-weight:600;color:#4C1D95;flex:1;"></span>
+      </div>
+      <p style="text-align:center;font-size:11px;color:#94A3B8;margin-top:14px;">
+        Demo credentials: admin@stayez.ph / demo123
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  OLD LOGIN VIEW (kept for fallback routing)                -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-login" class="view" style="display:none;"><!-- redirects to landing --></div>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  GUEST: BROWSE LISTINGS                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-browse" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <!-- Hero -->
+    <div class="hero-section">
+      <h1>Explore Extraordinary Places</h1>
+      <p>From beach bungalows to mountain villas, find your perfect sanctuary</p>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="mb-8" style="filter: drop-shadow(0 8px 32px rgba(0,0,0,0.10));">
+      <div class="bg-white rounded-2xl overflow-hidden" style="border: 1.5px solid #E5E7EB;">
+        <!-- Main search row -->
+        <div class="flex items-stretch divide-x divide-gray-150" style="min-height: 68px;">
+
+          <!-- Search by Name -->
+          <div class="search-segment flex items-center gap-3 px-5 flex-1 min-w-0" style="background:white; transition: background 0.15s;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-search" style="color:var(--brand);font-size:14px;"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">Property</p>
+              <input type="text" id="search-input" placeholder="Search by name or keyword…"
+                style="border:none;padding:0;font-size:14px;font-weight:500;color:var(--gray-900);background:transparent;box-shadow:none;width:100%;" />
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="width:1px;background:var(--gray-100);flex-shrink:0;"></div>
+
+          <!-- Location -->
+          <div class="search-segment flex items-center gap-3 px-5 flex-1 min-w-0">
+            <div style="width:36px;height:36px;border-radius:10px;background:#FFF0EB;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-map-marker-alt" style="color:var(--accent);font-size:14px;"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">Location</p>
+              <input type="text" id="location-filter" placeholder="Manila, Cebu, Boracay…"
+                style="border:none;padding:0;font-size:14px;font-weight:500;color:var(--gray-900);background:transparent;box-shadow:none;width:100%;" />
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="width:1px;background:var(--gray-100);flex-shrink:0;"></div>
+
+          <!-- Property Type -->
+          <div class="search-segment flex items-center gap-3 px-5" style="min-width:180px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#F0FDF4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-home" style="color:#059669;font-size:14px;"></i>
+            </div>
+            <div class="flex-1">
+              <p style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">Type</p>
+              <select id="type-filter"
+                style="border:none;padding:0;font-size:14px;font-weight:500;color:var(--gray-900);background:transparent;box-shadow:none;width:100%;cursor:pointer;-webkit-appearance:none;">
+                <option value="">All Types</option>
+                <option value="hotel">Hotel</option>
+                <option value="apartment">Apartment</option>
+                <option value="dorm">Dorm</option>
+                <option value="guest_room">Guest Room</option>
+                <option value="villa">Villa</option>
+                <option value="cabin">Cabin</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="width:1px;background:var(--gray-100);flex-shrink:0;"></div>
+
+          <!-- Sort -->
+          <div class="search-segment flex items-center gap-3 px-5" style="min-width:170px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:#FEF9C3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="fas fa-sort-amount-down" style="color:#B45309;font-size:14px;"></i>
+            </div>
+            <div class="flex-1">
+              <p style="font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px;">Sort</p>
+              <select id="sort-filter"
+                style="border:none;padding:0;font-size:14px;font-weight:500;color:var(--gray-900);background:transparent;box-shadow:none;width:100%;cursor:pointer;-webkit-appearance:none;">
+                <option value="">Default</option>
+                <option value="price_asc">Price: Low → High</option>
+                <option value="price_desc">Price: High → Low</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Search Button -->
+          <div class="flex items-center px-4" style="background:white;">
+            <button onclick="filterAndRender()"
+              style="width:46px;height:46px;border-radius:14px;background:var(--brand);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;box-shadow:0 4px 14px rgba(27,106,255,0.35);"
+              onmouseover="this.style.background='var(--brand-dark)';this.style.transform='scale(1.05)';"
+              onmouseout="this.style.background='var(--brand)';this.style.transform='scale(1)';">
+              <i class="fas fa-search" style="color:white;font-size:16px;"></i>
+            </button>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+
+    <!-- Listings Grid -->
+    <div id="listings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LISTING DETAIL MODAL                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="listing-modal" class="modal-overlay" onclick="if(event.target === this) closeListing()">
+  <div class="modal-content w-full max-w-2xl">
+    <div class="relative">
+      <!-- Image Gallery -->
+      <div id="modal-image" class="w-full h-80 bg-gradient-to-br from-gray-200 to-gray-100 flex items-center justify-center text-6xl text-gray-300"></div>
+      <button class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg hover:bg-gray-100 transition" onclick="closeListing()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="p-8">
+      <!-- Title & Rating -->
+      <h2 id="modal-title" class="text-3xl font-bold text-gray-900 mb-2"></h2>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="flex items-center gap-1">
+          <i class="fas fa-star text-yellow-400"></i>
+          <span id="modal-rating" class="font-semibold text-gray-900"></span>
+          <span class="text-gray-500 text-sm">(128 reviews)</span>
+        </div>
+        <span id="modal-location" class="text-gray-500 text-sm"><i class="fas fa-map-marker-alt" style="margin-right:4px;color:var(--accent);"></i></span>
+      </div>
+
+      <!-- Key Details Strip -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <span id="modal-type-badge" style="display:inline-flex;align-items:center;gap:6px;background:var(--brand-light);color:var(--brand);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;text-transform:capitalize;">
+          <i class="fas fa-home"></i>
+        </span>
+        <span id="modal-price-badge" style="display:inline-flex;align-items:center;gap:6px;background:#FEF9C3;color:#92400E;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;">
+          <i class="fas fa-tag"></i>
+        </span>
+        <span id="modal-beds-badge" style="display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);color:var(--gray-700);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;">
+          <i class="fas fa-bed"></i>
+        </span>
+        <span id="modal-baths-badge" style="display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);color:var(--gray-700);padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;">
+          <i class="fas fa-bath"></i>
+        </span>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-6 pb-6 border-b border-gray-200">
+        <p id="modal-details" class="text-gray-700 text-sm leading-relaxed"></p>
+      </div>
+
+      <!-- Amenities -->
+      <div class="mb-6 pb-6 border-b border-gray-200">
+        <h3 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Amenities</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-wifi text-blue-500"></i>
+            <span class="text-sm font-medium text-gray-700">WiFi</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-swimming-pool text-blue-500"></i>
+            <span class="text-sm font-medium text-gray-700">Pool</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-wind text-blue-500"></i>
+            <span class="text-sm font-medium text-gray-700">Air Con</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <i class="fas fa-utensils text-blue-500"></i>
+            <span class="text-sm font-medium text-gray-700">Kitchen</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Host Info -->
+      <div class="mb-6 p-4 rounded-xl border border-gray-200 flex items-center gap-4">
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-user" style="color:var(--brand);font-size:16px;"></i>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-0.5">Hosted by</p>
+          <p id="modal-host" class="text-sm font-bold text-gray-900"></p>
+          <p id="modal-host-id" class="text-xs text-gray-400"></p>
+        </div>
+      </div>
+
+      <!-- Booking Widget -->
+      <div id="booking-widget" class="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6">
+        <h3 class="text-sm font-bold text-gray-900 mb-4">Book Your Stay</h3>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-semibold text-gray-700 block mb-1.5">Check In</label>
+              <input type="date" id="modal-checkin" onchange="updatePriceCalculation()"/>
+            </div>
+            <div>
+              <label class="text-xs font-semibold text-gray-700 block mb-1.5">Check Out</label>
+              <input type="date" id="modal-checkout" onchange="updatePriceCalculation()"/>
+            </div>
+          </div>
+          
+          <div id="price-breakdown" class="hidden space-y-2 pt-4 border-t border-gray-200">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Base price × <span id="nights-count"></span> nights</span>
+              <span id="base-price" class="font-semibold text-gray-900"></span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Platform fee (15%)</span>
+              <span id="platform-fee" class="font-semibold text-gray-900"></span>
+            </div>
+            <div class="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+              <span>Total</span>
+              <span id="total-price" class="text-brand"></span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-full" onclick="proceedToBooking()">
+            <i class="fas fa-calendar-check"></i>
+            Request to Book
+          </button>
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <p class="text-xs text-gray-500 text-center">
+        By booking, you agree to StayEZ's Terms of Service
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  GUEST: MY BOOKINGS                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-my-bookings" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">My Bookings</h1>
+    <div id="bookings-container" class="space-y-4"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  GUEST: FAVORITES                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-favorites" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-8">
+      <div style="width:42px;height:42px;border-radius:12px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-heart" style="color:#EF4444;font-size:18px;"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Favorites</h1>
+        <p class="text-sm text-gray-500">Properties you've saved</p>
+      </div>
+    </div>
+    <div id="favorites-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  RATINGS VIEW (GUEST + HOST)                               -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-ratings" class="view py-8">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-8">
+      <div style="width:42px;height:42px;border-radius:12px;background:#FEF9C3;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-star" style="color:#D97706;font-size:18px;"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900" id="ratings-heading">Ratings</h1>
+        <p class="text-sm text-gray-500" id="ratings-subheading">Your reviews and ratings</p>
+      </div>
+    </div>
+    <div id="ratings-container"></div>
+  </div>
+</div>
+
+<!-- Rate Booking Modal -->
+<div id="rate-modal" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,0.7);backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:24px;width:100%;max-width:440px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.25);position:relative;padding:28px;">
+    <button onclick="closeRateModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:#F1F5F9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#64748B;">
+      <i class="fas fa-times"></i>
+    </button>
+    <div style="margin-bottom:20px;">
+      <p style="font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Leave a Review</p>
+      <h3 id="rate-modal-title" style="font-size:18px;font-weight:800;color:#0F172A;margin:0;"></h3>
+    </div>
+    <!-- Stars -->
+    <div style="margin-bottom:20px;">
+      <p style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Your Rating</p>
+      <div id="star-selector" style="display:flex;gap:8px;">
+        <button class="star-btn" data-val="1" onclick="selectStar(1)" style="font-size:28px;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:all 0.1s;">★</button>
+        <button class="star-btn" data-val="2" onclick="selectStar(2)" style="font-size:28px;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:all 0.1s;">★</button>
+        <button class="star-btn" data-val="3" onclick="selectStar(3)" style="font-size:28px;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:all 0.1s;">★</button>
+        <button class="star-btn" data-val="4" onclick="selectStar(4)" style="font-size:28px;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:all 0.1s;">★</button>
+        <button class="star-btn" data-val="5" onclick="selectStar(5)" style="font-size:28px;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:all 0.1s;">★</button>
+      </div>
+      <p id="star-label" style="font-size:13px;color:#64748B;margin-top:6px;font-weight:500;"></p>
+    </div>
+    <!-- Comment -->
+    <div style="margin-bottom:20px;">
+      <p style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Your Comment <span style="color:#94A3B8;font-weight:400;">(optional)</span></p>
+      <textarea id="rate-comment" rows="3" placeholder="Share your experience staying here…" style="resize:none;"></textarea>
+    </div>
+    <button onclick="submitRating()" class="btn btn-primary w-full" style="height:46px;">
+      <i class="fas fa-star"></i> Submit Review
+    </button>
+    <div id="rate-error" style="display:none;margin-top:12px;padding:10px 14px;background:#FEF2F2;border:1.5px solid #FECACA;border-radius:10px;font-size:13px;font-weight:600;color:#991B1B;align-items:center;gap:8px;">
+      <i class="fas fa-exclamation-circle" style="color:#EF4444;"></i>
+      <span id="rate-error-text"></span>
+    </div>
+  </div>
+</div>
+
+<div id="view-my-listings" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-4xl font-bold text-gray-900">My Properties</h1>
+      <button class="btn btn-primary" onclick="showCreateListing()">
+        <i class="fas fa-plus"></i>
+        Create Listing
+      </button>
+    </div>
+
+    <!-- Analytics Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="stat-card">
+        <div class="stat-value">$<span id="host-earnings">0</span></div>
+        <div class="stat-label">Total Earnings</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="host-active-listings">0</div>
+        <div class="stat-label">Active Listings</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><span id="host-occupancy">0</span>%</div>
+        <div class="stat-label">Occupancy Rate</div>
+      </div>
+    </div>
+
+    <!-- Listings Table -->
+    <div class="bg-white rounded-lg border border-gray-100 overflow-hidden">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Property Name</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Price/Night</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="host-listings-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HOST: CREATE/EDIT LISTING MODAL                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="create-listing-modal" class="modal-overlay" onclick="if(event.target === this) closeCreateListing()">
+  <div class="modal-content w-full max-w-2xl">
+    <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-2xl font-bold text-gray-900">
+        <span id="form-title">Create New Property</span>
+      </h2>
+      <button class="btn btn-icon" onclick="closeCreateListing()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="p-8 space-y-5">
+      <div>
+        <label class="text-sm font-semibold text-gray-700 block mb-2">Property Name</label>
+        <input type="text" id="listing-name" placeholder="Cozy Beachfront Villa"/>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-semibold text-gray-700 block mb-2">Property Type</label>
+          <select id="listing-type">
+            <option value="">Select type</option>
+            <option value="hotel">Hotel</option>
+            <option value="apartment">Apartment</option>
+            <option value="dorm">Dorm</option>
+            <option value="guest_room">Guest Room</option>
+            <option value="villa">Villa</option>
+            <option value="cabin">Cabin</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-gray-700 block mb-2">Nightly Price ($)</label>
+          <input type="number" id="listing-price" placeholder="120" min="0" step="0.01"/>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-semibold text-gray-700 block mb-2">Location</label>
+          <input type="text" id="listing-location" placeholder="Manila, Philippines"/>
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-gray-700 block mb-2">Contact Number</label>
+          <input type="tel" id="listing-contact" placeholder="+63 999 123 4567"/>
+        </div>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-gray-700 block mb-2">Description</label>
+        <textarea id="listing-description" placeholder="Describe your property..." rows="4"></textarea>
+      </div>
+      <div>
+        <label class="text-sm font-semibold text-gray-700 block mb-2">Property Image</label>
+        <div id="image-upload-area" onclick="document.getElementById('listing-image-file').click()"
+          style="border: 2px dashed var(--gray-300); border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--gray-50);"
+          onmouseover="this.style.borderColor='var(--brand)';this.style.background='var(--brand-light)';"
+          onmouseout="this.style.borderColor='var(--gray-300)';this.style.background='var(--gray-50)';">
+          <i class="fas fa-cloud-upload-alt" style="font-size:28px;color:var(--gray-400);margin-bottom:8px;display:block;"></i>
+          <p style="font-size:13px;font-weight:600;color:var(--gray-600);margin:0 0 2px;">Click to upload image</p>
+          <p style="font-size:11px;color:var(--gray-400);margin:0;">JPG, PNG, WEBP up to 5MB</p>
+        </div>
+        <input type="file" id="listing-image-file" accept="image/*" style="display:none;" onchange="handleImageUpload(event)"/>
+        <!-- Preview -->
+        <div id="image-preview-wrap" style="display:none; margin-top:10px; position:relative;">
+          <img id="image-preview" style="width:100%;height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200);"/>
+          <button onclick="clearImageUpload()" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.6);border:none;color:white;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <!-- Hidden store for base64 or existing URL -->
+        <input type="hidden" id="listing-image"/>
+      </div>
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button class="btn btn-secondary flex-1" onclick="closeCreateListing()">Cancel</button>
+        <button class="btn btn-primary flex-1" onclick="saveListing()">
+          <i class="fas fa-save"></i>
+          Save Property
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  HOST: BOOKING REQUESTS                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-booking-requests" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">Booking Requests</h1>
+    <div class="bg-white rounded-lg border border-gray-100 overflow-hidden">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Guest</th>
+            <th>Property</th>
+            <th>Dates</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="booking-requests-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ADMIN: DASHBOARD                                          -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-admin-listings" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-4xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+
+    <!-- Analytics — 4 clickable stat cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card" style="cursor:pointer;transition:box-shadow 0.2s,transform 0.2s;" onclick="showView('admin-users')" onmouseover="this.style.boxShadow='0 8px 24px rgba(27,106,255,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='';this.style.transform=''">
+        <div style="width:36px;height:36px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><i class="fas fa-users" style="color:#5B21B6;"></i></div>
+        <div class="stat-value" id="admin-users-count">0</div>
+        <div class="stat-label">Total Users</div>
+        <p style="font-size:11px;color:var(--brand);margin:6px 0 0;font-weight:600;">View all →</p>
+      </div>
+      <div class="stat-card" style="cursor:pointer;transition:box-shadow 0.2s,transform 0.2s;" onclick="showView('admin-all-listings')" onmouseover="this.style.boxShadow='0 8px 24px rgba(27,106,255,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='';this.style.transform=''">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><i class="fas fa-home" style="color:var(--brand);"></i></div>
+        <div class="stat-value" id="admin-listings-count">0</div>
+        <div class="stat-label">Active Properties</div>
+        <p style="font-size:11px;color:var(--brand);margin:6px 0 0;font-weight:600;">View all →</p>
+      </div>
+      <div class="stat-card" style="cursor:pointer;transition:box-shadow 0.2s,transform 0.2s;" onclick="showView('admin-bookings')" onmouseover="this.style.boxShadow='0 8px 24px rgba(27,106,255,0.12)';this.style.transform='translateY(-2px)'" onmouseout="this.style.boxShadow='';this.style.transform=''">
+        <div style="width:36px;height:36px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><i class="fas fa-calendar-alt" style="color:#92400E;"></i></div>
+        <div class="stat-value" id="admin-bookings-count">0</div>
+        <div class="stat-label">Total Bookings</div>
+        <p style="font-size:11px;color:var(--brand);margin:6px 0 0;font-weight:600;">View all →</p>
+      </div>
+      <div class="stat-card">
+        <div style="width:36px;height:36px;border-radius:10px;background:#D1FAE5;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;"><i class="fas fa-dollar-sign" style="color:#065F46;"></i></div>
+        <div class="stat-value">$<span id="admin-revenue-count">0</span></div>
+        <div class="stat-label">Gross Booking Volume</div>
+      </div>
+    </div>
+
+    <!-- Listings preview -->
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">All Listings</h2>
+    <div class="bg-white rounded-lg border border-gray-100 overflow-hidden mb-8">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Host</th>
+            <th>Location</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="admin-listings-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Bookings preview -->
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">All Bookings</h2>
+    <div class="bg-white rounded-lg border border-gray-100 overflow-hidden">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Guest</th>
+            <th>Property</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Nights</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-bookings-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ADMIN: USERS VIEW                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-admin-users" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-8">
+      <div style="width:42px;height:42px;border-radius:12px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-users" style="color:#5B21B6;font-size:18px;"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">All Users</h1>
+        <p class="text-sm text-gray-500">Complete user registry</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>ID</th>
+            <th>Listings / Bookings</th>
+          </tr>
+        </thead>
+        <tbody id="admin-users-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ADMIN: ALL LISTINGS VIEW                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-admin-all-listings" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-8">
+      <div style="width:42px;height:42px;border-radius:12px;background:var(--brand-light);display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-home" style="color:var(--brand);font-size:18px;"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">All Listings</h1>
+        <p class="text-sm text-gray-500">Click any row to preview how guests see the listing</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Host</th>
+            <th>Location</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Rating</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="admin-all-listings-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  ADMIN: ALL BOOKINGS VIEW                                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="view-admin-bookings" class="view py-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center gap-3 mb-8">
+      <div style="width:42px;height:42px;border-radius:12px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-calendar-alt" style="color:#92400E;font-size:18px;"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">All Bookings</h1>
+        <p class="text-sm text-gray-500">Click any row to view full booking details</p>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Guest</th>
+            <th>Property</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Nights</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-bookings-all-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  UI CONFIRM MODAL (replaces browser confirm())             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="ui-confirm-modal" style="display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);">
+  <div style="background:white;border-radius:20px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.25);animation:slideUp 0.25s ease-out;">
+    <div id="ui-confirm-header" style="padding:24px 24px 0;text-align:center;">
+      <div id="ui-confirm-icon" style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;"></div>
+      <h3 id="ui-confirm-title" style="font-size:18px;font-weight:700;color:#111827;margin:0 0 8px;"></h3>
+      <p id="ui-confirm-body" style="font-size:14px;color:#6B7280;line-height:1.6;margin:0;"></p>
+    </div>
+    <div style="padding:24px;display:flex;gap:10px;">
+      <button id="ui-confirm-cancel" onclick="closeUIConfirm()" style="flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:600;background:#F3F4F6;border:none;cursor:pointer;color:#374151;transition:background 0.15s;" onmouseover="this.style.background='#E5E7EB'" onmouseout="this.style.background='#F3F4F6'">Cancel</button>
+      <button id="ui-confirm-ok" style="flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;color:white;transition:all 0.15s;"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  BOOKING DETAIL MODAL (admin view)                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="booking-detail-modal" class="modal-overlay" onclick="if(event.target===this)closeBookingDetail()">
+  <div class="modal-content w-full" style="max-width:560px;">
+    <div style="padding:24px 28px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;">
+          <i class="fas fa-calendar-check" style="color:#92400E;"></i>
+        </div>
+        <h2 style="font-size:18px;font-weight:700;color:#111827;margin:0;">Booking Details</h2>
+      </div>
+      <button onclick="closeBookingDetail()" class="btn btn-icon btn-secondary"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="booking-detail-body" style="padding:28px;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  JAVASCRIPT ENGINE                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+let currentRole = 'guest';
+let currentUser = { id: 'user_1', name: 'Demo Guest', email: 'demo@stayez.ph' };
+let selectedListing = null;
+let activeCategory = null;
+let editingListingId = null;
+
+// ═══════════════════════════════════════════════════════════
+// LOCALSTORAGE & INITIALIZATION
+// ═══════════════════════════════════════════════════════════
+
+function initMock() {
+  if (!localStorage.getItem('stayez_listings')) {
+    const mockListings = [
+      {
+        _id: 'list_1',
+        name: 'Luxury Beachfront Villa',
+        type: 'villa',
+        location: 'Boracay, Aklan',
+        price: 250,
+        description: '5-bedroom oceanfront paradise with infinity pool, private beach access, and world-class amenities.',
+        image: 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=500&h=300&fit=crop',
+        hostId: 'host_1',
+        hostName: 'Maria Santos',
+        contactNumber: '+63 917 123 4567',
+        rating: 4.92,
+        beds: 5,
+        baths: 3
+      },
+      {
+        _id: 'list_2',
+        name: 'Cozy Manila Apartment',
+        type: 'apartment',
+        location: 'Makati, Manila',
+        price: 85,
+        description: 'Modern 2-bedroom apartment in the heart of the city. Perfect for business travelers and tourists.',
+        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500&h=300&fit=crop',
+        hostId: 'host_2',
+        hostName: 'Carlos Reyes',
+        contactNumber: '+63 918 765 4321',
+        rating: 4.65,
+        beds: 2,
+        baths: 1
+      },
+      {
+        _id: 'list_3',
+        name: 'Mountain Cabin Retreat',
+        type: 'cabin',
+        location: 'Tagaytay, Cavite',
+        price: 120,
+        description: 'Secluded cabin with panoramic mountain views, perfect for couples and nature lovers.',
+        image: 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=500&h=300&fit=crop',
+        hostId: 'host_1',
+        hostName: 'Maria Santos',
+        contactNumber: '+63 917 123 4567',
+        rating: 4.88,
+        beds: 2,
+        baths: 2
+      },
+      {
+        _id: 'list_4',
+        name: 'Cebu Budget Dorm',
+        type: 'dorm',
+        location: 'Cebu City, Cebu',
+        price: 25,
+        description: 'Friendly hostel with shared dorms and communal spaces. Great for backpackers and solo travelers.',
+        image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=500&h=300&fit=crop',
+        hostId: 'host_3',
+        hostName: 'Juan Dela Cruz',
+        contactNumber: '+63 919 234 5678',
+        rating: 4.45,
+        beds: 6,
+        baths: 2
+      },
+      {
+        _id: 'list_5',
+        name: 'Elegant Quezon City Guest Room',
+        type: 'guest_room',
+        location: 'Quezon City, QC',
+        price: 65,
+        description: 'Spacious, beautifully furnished guest room in a residential area near shopping malls and restaurants.',
+        image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=500&h=300&fit=crop',
+        hostId: 'host_4',
+        hostName: 'Andrea Gomez',
+        contactNumber: '+63 920 345 6789',
+        rating: 4.72,
+        beds: 1,
+        baths: 1
+      },
+      {
+        _id: 'list_6',
+        name: 'Iloilo Beach Resort Hotel',
+        type: 'hotel',
+        location: 'Iloilo City, Iloilo',
+        price: 180,
+        description: 'Full-service beachfront hotel with spa, restaurant, and event facilities.',
+        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop',
+        hostId: 'host_2',
+        hostName: 'Carlos Reyes',
+        contactNumber: '+63 918 765 4321',
+        rating: 4.85,
+        beds: 3,
+        baths: 2
+      },
+      {
+        _id: 'list_7',
+        name: 'Davao Seaside Mansion',
+        type: 'villa',
+        location: 'Davao City, Davao',
+        price: 300,
+        description: 'Stunning beachfront mansion with 6 bedrooms, infinity pool, and private yacht dock.',
+        image: 'https://images.unsplash.com/photo-1512207736139-c0b65a21f430?w=500&h=300&fit=crop',
+        hostId: 'host_3',
+        hostName: 'Juan Dela Cruz',
+        contactNumber: '+63 919 234 5678',
+        rating: 4.95,
+        beds: 6,
+        baths: 4
+      },
+      {
+        _id: 'list_8',
+        name: 'Baguio Forest Cabin',
+        type: 'cabin',
+        location: 'Baguio City, Benguet',
+        price: 95,
+        description: 'Cozy wooden cabin surrounded by pine forests. Perfect for weekend getaways.',
+        image: 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=500&h=300&fit=crop',
+        hostId: 'host_4',
+        hostName: 'Andrea Gomez',
+        contactNumber: '+63 920 345 6789',
+        rating: 4.78,
+        beds: 2,
+        baths: 1
+      }
+    ];
+    localStorage.setItem('stayez_listings', JSON.stringify(mockListings));
+  }
+
+  if (!localStorage.getItem('stayez_bookings')) {
+    const mockBookings = [
+      {
+        _id: 'book_1',
+        listingId: 'list_1',
+        guestId: 'user_1',
+        guestName: 'Demo Guest',
+        startDate: '2026-06-15',
+        endDate: '2026-06-20',
+        status: 'approved',
+        totalPrice: 1250
+      },
+      {
+        _id: 'book_2',
+        listingId: 'list_2',
+        guestId: 'user_1',
+        guestName: 'Demo Guest',
+        startDate: '2026-05-25',
+        endDate: '2026-05-28',
+        status: 'pending',
+        totalPrice: 255
+      },
+      {
+        _id: 'book_3',
+        listingId: 'list_3',
+        guestId: 'user_1',
+        guestName: 'Demo Guest',
+        startDate: '2026-07-01',
+        endDate: '2026-07-04',
+        status: 'rejected',
+        totalPrice: 414
+      }
+    ];
+    localStorage.setItem('stayez_bookings', JSON.stringify(mockBookings));
+  }
+
+  if (!localStorage.getItem('stayez_users')) {
+    const mockUsers = [
+      { id: 'user_1', name: 'Demo Guest', email: 'demo@stayez.ph', password: 'demo123', role: 'guest' },
+      { id: 'host_1', name: 'Maria Santos', email: 'maria@host.com', password: 'demo123', role: 'host' },
+      { id: 'host_2', name: 'Carlos Reyes', email: 'carlos@host.com', password: 'demo123', role: 'host' },
+      { id: 'admin_1', name: 'Admin User', email: 'admin@stayez.ph', password: 'demo123', role: 'admin' }
+    ];
+    localStorage.setItem('stayez_users', JSON.stringify(mockUsers));
+  }
+}
+
+function getListings() {
+  return JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+}
+
+function saveListings(listings) {
+  localStorage.setItem('stayez_listings', JSON.stringify(listings));
+}
+
+function getBookings() {
+  return JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+}
+
+function saveBookings(bookings) {
+  localStorage.setItem('stayez_bookings', JSON.stringify(bookings));
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTHENTICATION
+// ═══════════════════════════════════════════════════════════
+
+const ROLE_BADGE_CONFIG = {
+  guest: { label: 'Guest', bg: '#DBEAFE', color: '#1D4ED8', icon: 'fa-user' },
+  host:  { label: 'Host',  bg: '#D1FAE5', color: '#065F46', icon: 'fa-key' },
+  admin: { label: 'Admin', bg: '#EDE9FE', color: '#5B21B6', icon: 'fa-shield-alt' }
+};
+
+let loginModalRole = 'guest';
+
+function showLoginModal(role) {
+  loginModalRole = role || 'guest';
+  const modal = document.getElementById('login-modal');
+  modal.style.display = 'flex';
+  switchAuthTab('login');
+  clearLoginError(); clearRegisterError();
+
+  const cfg = {
+    guest: { bg:'#EFF6FF', color:'#1D4ED8', icon:'fa-user', label:'Guest', hint:'Demo: demo@stayez.ph / demo123' },
+    host:  { bg:'#F0FDF4', color:'#065F46', icon:'fa-key',  label:'Host',  hint:'Demo: maria@host.com / demo123' }
+  }[loginModalRole] || { bg:'#EFF6FF', color:'#1D4ED8', icon:'fa-user', label:'Guest', hint:'' };
+
+  const ind = document.getElementById('login-role-indicator');
+  ind.style.background = cfg.bg;
+  ind.innerHTML = `<i class="fas ${cfg.icon}" style="color:${cfg.color};font-size:16px;"></i><span style="font-size:13px;font-weight:700;color:${cfg.color};">${cfg.label} Login</span>`;
+  document.getElementById('login-hint').innerHTML = `<i class="fas fa-info-circle" style="margin-right:4px;color:#94A3B8;"></i>${cfg.hint}`;
+}
+
+function closeLoginModal() {
+  document.getElementById('login-modal').style.display = 'none';
+  clearLoginError(); clearRegisterError();
+}
+
+function showAdminLogin() {
+  document.getElementById('admin-login-modal').style.display = 'flex';
+  clearAdminError();
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-login-modal').style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('auth-login-form').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('auth-register-form').style.display = isLogin ? 'none' : 'block';
+  const tl = document.getElementById('tab-login');
+  const tr = document.getElementById('tab-register');
+  tl.style.color = isLogin ? '#1B6AFF' : '#94A3B8';
+  tl.style.borderBottom = isLogin ? '2px solid #1B6AFF' : '2px solid transparent';
+  tr.style.color = isLogin ? '#94A3B8' : '#1B6AFF';
+  tr.style.borderBottom = isLogin ? '2px solid transparent' : '2px solid #1B6AFF';
+  clearLoginError(); clearRegisterError();
+}
+
+function togglePasswordVis(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error-msg');
+  const txt = document.getElementById('login-error-text');
+  if (el && txt) { txt.textContent = msg; el.style.display = 'flex'; }
+}
+function clearLoginError() {
+  const el = document.getElementById('login-error-msg');
+  if (el) el.style.display = 'none';
+}
+function showRegisterError(msg) {
+  const el = document.getElementById('register-error-msg');
+  const txt = document.getElementById('register-error-text');
+  if (el && txt) { txt.textContent = msg; el.style.display = 'flex'; }
+}
+function clearRegisterError() {
+  const el = document.getElementById('register-error-msg');
+  if (el) el.style.display = 'none';
+}
+function showAdminError(msg) {
+  const el = document.getElementById('admin-error-msg');
+  const txt = document.getElementById('admin-error-text');
+  if (el && txt) { txt.textContent = msg; el.style.display = 'flex'; }
+}
+function clearAdminError() {
+  const el = document.getElementById('admin-error-msg');
+  if (el) el.style.display = 'none';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email-input').value.trim().toLowerCase();
+  const password = document.getElementById('login-password-input').value;
+  clearLoginError();
+  if (!email || !password) { showLoginError('Please enter your email and password to continue.'); return; }
+
+  const users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+  const user = users.find(u => u.email.toLowerCase() === email && u.password === password && u.role === loginModalRole);
+
+  if (!user) {
+    showLoginError('Incorrect email or password. Please check your credentials and try again.');
+    document.getElementById('login-password-input').value = '';
+    return;
+  }
+  closeLoginModal();
+  loginUser(user);
+}
+
+function doRegister() {
+  const name  = document.getElementById('reg-name-input').value.trim();
+  const email = document.getElementById('reg-email-input').value.trim().toLowerCase();
+  const pass  = document.getElementById('reg-password-input').value;
+  clearRegisterError();
+
+  if (!name || !email || !pass) { showRegisterError('Please fill in all fields to create your account.'); return; }
+  if (pass.length < 6) { showRegisterError('Password must be at least 6 characters long.'); return; }
+
+  const users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+  if (users.find(u => u.email.toLowerCase() === email)) {
+    showRegisterError('This email is already registered. Try signing in instead.'); return;
+  }
+
+  const newUser = {
+    id: loginModalRole + '_' + Date.now(),
+    name, email, password: pass,
+    role: loginModalRole
+  };
+  users.push(newUser);
+  localStorage.setItem('stayez_users', JSON.stringify(users));
+  closeLoginModal();
+  loginUser(newUser);
+  showToast('🎉 Account created! Welcome, ' + name + '!', 'success');
+}
+
+function doAdminLogin() {
+  const email = document.getElementById('admin-email-input').value.trim().toLowerCase();
+  const password = document.getElementById('admin-password-input').value;
+  clearAdminError();
+  if (!email || !password) { showAdminError('Please enter your admin credentials.'); return; }
+
+  const users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+  const user = users.find(u => u.email.toLowerCase() === email && u.password === password && u.role === 'admin');
+
+  if (!user) {
+    showAdminError('Access denied. Invalid admin credentials.');
+    document.getElementById('admin-password-input').value = '';
+    return;
+  }
+  closeAdminModal();
+  loginUser(user);
+}
+
+function loginUser(user) {
+  currentUser = { id: user.id, name: user.name, email: user.email, role: user.role };
+  currentRole = user.role;
+  localStorage.setItem('stayez_session', JSON.stringify({ role: currentRole, user: currentUser }));
+  showRoleBadge(currentRole);
+  document.getElementById('logout-btn').classList.remove('hidden');
+  renderNav();
+
+  if (currentRole === 'guest') showView('browse');
+  else if (currentRole === 'host') showView('my-listings');
+  else showView('admin-listings');
+
+  const greetings = { guest: '👋 Welcome back, ' + user.name + '!', host: '🏠 Welcome, ' + user.name + '!', admin: '🛡️ Admin access granted!' };
+  showToast(greetings[currentRole] || '👋 Welcome!', 'success');
+}
+
+function showRoleBadge(role) {
+  const cfg = ROLE_BADGE_CONFIG[role];
+  if (!cfg) return;
+  const badge = document.getElementById('role-badge');
+  badge.style.background = cfg.bg;
+  badge.style.color = cfg.color;
+  badge.innerHTML = `<i class="fas ${cfg.icon}" style="margin-right:4px;"></i>${cfg.label}`;
+  badge.classList.remove('hidden');
+  badge.style.display = 'inline-flex';
+}
+
+function logout() {
+  localStorage.removeItem('stayez_session');
+  currentRole = 'guest';
+  currentUser = {};
+  editingListingId = null;
+  selectedListing = null;
+  const badge = document.getElementById('role-badge');
+  badge.classList.add('hidden');
+  badge.style.display = 'none';
+  document.getElementById('logout-btn').classList.add('hidden');
+  renderNav();
+  showView('landing');
+  showToast('👋 Logged out successfully', 'success');
+}
+
+// Legacy
+function demoLogin(role) { loginModalRole = role; }
+function handleLogin(e) { if (e) e.preventDefault(); }
+function switchRole(role) {}
+
+// ═══════════════════════════════════════════════════════════
+// ROUTING & VIEWS
+// ═══════════════════════════════════════════════════════════
+
+function showView(viewId) {
+  // Redirect old 'login' route to landing
+  if (viewId === 'login') viewId = 'landing';
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const view = document.getElementById('view-' + viewId);
+  if (view) {
+    view.classList.add('active');
+    setActiveNav(viewId);
+    // Hide header on landing page, show on all others
+    const header = document.querySelector('header');
+    if (header) header.style.display = (viewId === 'landing') ? 'none' : '';
+    if (viewId === 'browse') renderListings();
+    if (viewId === 'my-bookings') renderMyBookings();
+    if (viewId === 'my-listings') renderMyListings();
+    if (viewId === 'booking-requests') renderBookingRequests();
+    if (viewId === 'admin-listings') renderAdminDashboard();
+    if (viewId === 'admin-all-listings') renderAdminAllListings();
+    if (viewId === 'admin-bookings') renderAdminAllBookings();
+    if (viewId === 'admin-users') renderAdminUsers();
+    if (viewId === 'favorites') renderFavorites();
+    if (viewId === 'ratings') renderRatings();
+  }
+}
+
+function goHome() {
+  if (currentRole === 'guest') showView('browse');
+  else if (currentRole === 'host') showView('my-listings');
+  else if (currentRole === 'admin') showView('admin-listings');
+}
+
+function renderNav() {
+  const nav = document.getElementById('main-nav');
+  nav.innerHTML = '';
+
+  if (!currentUser.id) return;
+
+  if (currentRole === 'guest') {
+    nav.innerHTML = `
+      <a class="nav-link" data-view="browse" onclick="showView('browse')">Browse</a>
+      <a class="nav-link" data-view="my-bookings" onclick="showView('my-bookings')">My Bookings</a>
+      <a class="nav-link" data-view="ratings" onclick="showView('ratings')"><i class="fas fa-star" style="font-size:11px;margin-right:4px;color:#F59E0B;"></i>Ratings</a>
+      <a class="nav-link" data-view="favorites" onclick="showView('favorites')"><i class="fas fa-heart" style="font-size:11px;margin-right:4px;color:#EF4444;"></i>Favorites</a>
+    `;
+  } else if (currentRole === 'host') {
+    nav.innerHTML = `
+      <a class="nav-link" data-view="my-listings" onclick="showView('my-listings')">My Properties</a>
+      <a class="nav-link" data-view="booking-requests" onclick="showView('booking-requests')">Booking Requests</a>
+      <a class="nav-link" data-view="ratings" onclick="showView('ratings')"><i class="fas fa-star" style="font-size:11px;margin-right:4px;color:#F59E0B;"></i>Ratings</a>
+    `;
+  } else if (currentRole === 'admin') {
+    nav.innerHTML = `
+      <a class="nav-link" data-view="admin-listings" onclick="showView('admin-listings')"><i class="fas fa-tachometer-alt" style="margin-right:5px;font-size:11px;"></i>Dashboard</a>
+      <a class="nav-link" data-view="admin-all-listings" onclick="showView('admin-all-listings')"><i class="fas fa-home" style="margin-right:5px;font-size:11px;"></i>All Listings</a>
+      <a class="nav-link" data-view="admin-bookings" onclick="showView('admin-bookings')"><i class="fas fa-calendar-alt" style="margin-right:5px;font-size:11px;"></i>All Bookings</a>
+      <a class="nav-link" data-view="admin-users" onclick="showView('admin-users')"><i class="fas fa-users" style="margin-right:5px;font-size:11px;"></i>All Users</a>
+    `;
+  }
+}
+
+function setActiveNav(viewId) {
+  document.querySelectorAll('#main-nav .nav-link').forEach(link => {
+    if (link.getAttribute('data-view') === viewId) {
+      link.classList.add('active-link');
+    } else {
+      link.classList.remove('active-link');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUEST: BROWSE & FILTER LOGIC
+// ═══════════════════════════════════════════════════════════
+
+function setCategory(cat) {
+  if (activeCategory === cat) {
+    activeCategory = null;
+  } else {
+    activeCategory = cat;
+  }
+  
+  document.querySelectorAll('.search-pill').forEach(pill => pill.classList.remove('active'));
+  if (activeCategory) {
+    event.target.closest('.search-pill').classList.add('active');
+  }
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('location-filter').value = '';
+  document.getElementById('type-filter').value = '';
+  document.getElementById('sort-filter').value = '';
+  activeCategory = null;
+  document.querySelectorAll('.search-pill').forEach(pill => pill.classList.remove('active'));
+  document.querySelectorAll('.search-pill')[0].classList.add('active');
+  filterAndRender();
+  showToast('Filters reset', 'success');
+}
+
+function filterAndRender() {
+  const search = document.getElementById('search-input')?.value.toLowerCase().trim() || '';
+  const location = document.getElementById('location-filter')?.value.toLowerCase().trim() || '';
+  const type = document.getElementById('type-filter')?.value || '';
+  const sort = document.getElementById('sort-filter')?.value || '';
+
+  // Log query parameters (developer info)
+  const queryString = `/listings?search=${encodeURIComponent(search)}&location=${encodeURIComponent(location)}&type=${type}&sort=${sort}`;
+  console.log('📍 Route:', queryString);
+
+  let listings = getListings();
+
+  // Search by name
+  if (search) {
+    listings = listings.filter(l => l.name.toLowerCase().includes(search) || l.description.toLowerCase().includes(search));
+  }
+
+  // Filter by location
+  if (location) {
+    listings = listings.filter(l => l.location.toLowerCase().includes(location));
+  }
+
+  // Filter by type
+  if (type) {
+    listings = listings.filter(l => l.type === type);
+  }
+
+  // Sort by price
+  if (sort === 'price_asc') {
+    listings = listings.sort((a, b) => a.price - b.price);
+  } else if (sort === 'price_desc') {
+    listings = listings.sort((a, b) => b.price - a.price);
+  }
+
+  console.log(`📊 Results: ${listings.length} properties found`);
+  renderListingGrid(listings);
+}
+
+function renderListings() {
+  filterAndRender();
+}
+
+// Allow Enter key to trigger search from text inputs
+document.addEventListener('DOMContentLoaded', function() {
+  ['search-input', 'location-filter'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') filterAndRender();
+    });
+  });
+});
+
+function renderListingGrid(listings) {
+  const grid = document.getElementById('listings-grid');
+  
+  if (!listings || listings.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+        <i class="fas fa-search" style="font-size: 48px; color: var(--gray-300); margin-bottom: 16px; display: block;"></i>
+        <p style="color: var(--gray-600); font-size: 16px; font-weight: 500;">No properties found</p>
+        <p style="color: var(--gray-500); font-size: 14px;">Try adjusting your filters or search criteria</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = listings.map(listing => {
+    const faved = isFavorited(listing._id);
+    return `
+    <div class="listing-card">
+      <div class="listing-image" onclick="openListing('${listing._id}')">
+        <img src="${listing.image}" alt="${listing.name}" style="width: 100%; height: 100%; object-fit: cover;">
+        <button class="heart-btn${faved ? ' liked' : ''}" onclick="toggleWishlist(event, '${listing._id}')">
+          <i class="${faved ? 'fas' : 'far'} fa-heart"></i>
+        </button>
+      </div>
+      <div class="p-4 flex flex-col flex-1">
+        <h3 class="font-semibold text-gray-900 text-sm mb-1">${listing.name}</h3>
+        <p class="text-xs text-gray-600 mb-3"><i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>${listing.location}</p>
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fas fa-star text-yellow-400 text-xs"></i>
+          <span class="text-sm font-semibold text-gray-900">${listing.rating}</span>
+          <span class="text-xs text-gray-500">${listing.beds} beds • ${listing.baths} baths</span>
+        </div>
+        <div class="mt-auto pt-3 border-t border-gray-100">
+          <div class="flex items-baseline gap-1 mb-3">
+            <span class="text-xl font-bold text-gray-900">$${listing.price}</span>
+            <span class="text-xs text-gray-600">per night</span>
+          </div>
+          <button class="btn btn-primary w-full btn-sm" onclick="openListing('${listing._id}')">
+            <i class="fas fa-search"></i>
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+function openListing(id) {
+  selectedListing = getListings().find(l => l._id === id);
+  if (!selectedListing) return;
+
+  document.getElementById('modal-image').innerHTML = `<img src="${selectedListing.image}" style="width:100%;height:100%;object-fit:cover;">`;
+  document.getElementById('modal-title').textContent = selectedListing.name;
+  document.getElementById('modal-location').innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right:4px;color:var(--accent);"></i>${selectedListing.location}`;
+  document.getElementById('modal-rating').textContent = selectedListing.rating;
+  document.getElementById('modal-details').textContent = selectedListing.description;
+  document.getElementById('modal-host').textContent = selectedListing.hostName;
+  document.getElementById('modal-host-id').textContent = 'Host ID: ' + selectedListing.hostId;
+
+  // Populate detail badges
+  document.getElementById('modal-type-badge').innerHTML = `<i class="fas fa-home"></i> ${selectedListing.type.replace('_', ' ')}`;
+  document.getElementById('modal-price-badge').innerHTML = `<i class="fas fa-tag"></i> $${selectedListing.price} / night`;
+  document.getElementById('modal-beds-badge').innerHTML = `<i class="fas fa-bed"></i> ${selectedListing.beds} bed${selectedListing.beds !== 1 ? 's' : ''}`;
+  document.getElementById('modal-baths-badge').innerHTML = `<i class="fas fa-bath"></i> ${selectedListing.baths} bath${selectedListing.baths !== 1 ? 's' : ''}`;
+
+  // Set today as min date for check-in
+  const today = new Date().toISOString().split('T')[0];
+
+  // Show booking widget only for logged-in guests; show a message for others
+  const bookingWidget = document.getElementById('booking-widget');
+  if (currentRole === 'guest' && currentUser.id) {
+    bookingWidget.innerHTML = `
+      <h3 class="text-sm font-bold text-gray-900 mb-4">Book Your Stay</h3>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-semibold text-gray-700 block mb-1.5">Check In</label>
+            <input type="date" id="modal-checkin" min="${today}" onchange="updatePriceCalculation()"/>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-gray-700 block mb-1.5">Check Out</label>
+            <input type="date" id="modal-checkout" min="${today}" onchange="updatePriceCalculation()"/>
+          </div>
+        </div>
+        <div id="price-breakdown" class="hidden space-y-2 pt-4 border-t border-gray-200">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Base price × <span id="nights-count"></span> nights</span>
+            <span id="base-price" class="font-semibold text-gray-900"></span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Platform fee (15%)</span>
+            <span id="platform-fee" class="font-semibold text-gray-900"></span>
+          </div>
+          <div class="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+            <span>Total</span>
+            <span id="total-price" style="color:var(--brand);"></span>
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" onclick="proceedToBooking()">
+          <i class="fas fa-calendar-check"></i>
+          Request to Book
+        </button>
+      </div>
+    `;
+  } else {
+    bookingWidget.innerHTML = `
+      <div style="text-align:center; padding: 20px 0;">
+        <i class="fas fa-lock" style="font-size:28px; color:var(--gray-300); margin-bottom:10px; display:block;"></i>
+        <p class="text-sm font-semibold text-gray-700 mb-1">Login as Guest to Book</p>
+        <p class="text-xs text-gray-500 mb-4">Only guests can make booking requests</p>
+        <button class="btn btn-primary btn-sm" onclick="closeListing(); logout();">
+          <i class="fas fa-user"></i> Switch to Guest
+        </button>
+      </div>
+    `;
+  }
+
+  document.getElementById('listing-modal').classList.add('open');
+}
+
+function closeListing() {
+  document.getElementById('listing-modal').classList.remove('open');
+  selectedListing = null;
+}
+
+function updatePriceCalculation() {
+  if (!selectedListing) return;
+  const checkin = document.getElementById('modal-checkin').value;
+  const checkout = document.getElementById('modal-checkout').value;
+
+  if (!checkin || !checkout) return;
+
+  const nights = Math.ceil((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
+  if (nights <= 0) {
+    showToast('Invalid date range', 'error');
+    return;
+  }
+
+  const basePrice = nights * selectedListing.price;
+  const platformFee = Math.round(basePrice * 0.15 * 100) / 100;
+  const total = basePrice + platformFee;
+
+  document.getElementById('nights-count').textContent = nights;
+  document.getElementById('base-price').textContent = '$' + basePrice.toFixed(2);
+  document.getElementById('platform-fee').textContent = '$' + platformFee.toFixed(2);
+  document.getElementById('total-price').textContent = '$' + total.toFixed(2);
+  document.getElementById('price-breakdown').classList.remove('hidden');
+}
+
+function proceedToBooking() {
+  if (!currentUser.id) {
+    showToast('Please log in to book', 'error');
+    showView('login');
+    return;
+  }
+
+  const checkin = document.getElementById('modal-checkin').value;
+  const checkout = document.getElementById('modal-checkout').value;
+
+  if (!checkin || !checkout) {
+    showToast('Please select both check-in and check-out dates', 'error');
+    return;
+  }
+
+  const checkinDate = new Date(checkin);
+  const checkoutDate = new Date(checkout);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Validate dates
+  if (checkinDate < today) {
+    showToast('Check-in date cannot be in the past', 'error');
+    return;
+  }
+
+  if (checkoutDate <= checkinDate) {
+    showToast('Check-out date must be after check-in date', 'error');
+    return;
+  }
+
+  // Date overlap validation
+  const allBookings = getBookings();
+  const conflict = allBookings.some(b => 
+    b.listingId === selectedListing._id && 
+    b.status === 'approved' &&
+    !(checkoutDate <= new Date(b.startDate) || checkinDate >= new Date(b.endDate))
+  );
+
+  if (conflict) {
+    showToast('❌ These dates are already booked. Please select different dates.', 'error');
+    return;
+  }
+
+  const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+  const totalPrice = (nights * selectedListing.price) + (nights * selectedListing.price * 0.15);
+
+  const booking = {
+    _id: 'book_' + Date.now(),
+    listingId: selectedListing._id,
+    guestId: currentUser.id,
+    guestName: currentUser.name,
+    startDate: checkin,
+    endDate: checkout,
+    status: 'pending',
+    totalPrice: Math.round(totalPrice * 100) / 100
+  };
+
+  const bookings = getBookings();
+  bookings.push(booking);
+  saveBookings(bookings);
+
+  showToast('✅ Booking request sent! Awaiting host approval.', 'success');
+  closeListing();
+  renderMyBookings();
+  showView('my-bookings');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FAVORITES
+// ═══════════════════════════════════════════════════════════
+
+function getFavorites() {
+  return JSON.parse(localStorage.getItem('stayez_favorites_' + (currentUser.id || 'anon')) || '[]');
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem('stayez_favorites_' + (currentUser.id || 'anon'), JSON.stringify(favs));
+}
+
+function isFavorited(id) {
+  return getFavorites().includes(id);
+}
+
+function toggleWishlist(e, id) {
+  e.preventDefault();
+  e.stopPropagation();
+  const btn = e.target.closest('.heart-btn');
+  const favs = getFavorites();
+  const idx = favs.indexOf(id);
+
+  if (idx === -1) {
+    favs.push(id);
+    btn.classList.add('liked');
+    btn.innerHTML = '<i class="fas fa-heart"></i>';
+    showToast('❤️ Added to Favorites', 'success');
+  } else {
+    favs.splice(idx, 1);
+    btn.classList.remove('liked');
+    btn.innerHTML = '<i class="far fa-heart"></i>';
+    showToast('Removed from Favorites', 'success');
+  }
+
+  saveFavorites(favs);
+
+  // If we're on the favorites view, re-render it live
+  const favView = document.getElementById('view-favorites');
+  if (favView && favView.classList.contains('active')) renderFavorites();
+}
+
+function renderFavorites() {
+  const favIds = getFavorites();
+  const grid = document.getElementById('favorites-grid');
+  const listings = getListings().filter(l => favIds.includes(l._id));
+
+  if (listings.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+          <i class="fas fa-heart-broken" style="font-size:30px;color:#EF4444;"></i>
+        </div>
+        <p style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">No favorites yet</p>
+        <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;">Tap the ♡ on any listing to save it here</p>
+        <button class="btn btn-primary btn-sm" onclick="showView('browse')">
+          <i class="fas fa-search"></i> Browse Properties
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = listings.map(listing => `
+    <div class="listing-card">
+      <div class="listing-image" onclick="openListing('${listing._id}')">
+        <img src="${listing.image}" alt="${listing.name}" style="width:100%;height:100%;object-fit:cover;">
+        <button class="heart-btn liked" onclick="toggleWishlist(event, '${listing._id}')">
+          <i class="fas fa-heart"></i>
+        </button>
+      </div>
+      <div class="p-4 flex flex-col flex-1">
+        <h3 class="font-semibold text-gray-900 text-sm mb-1">${listing.name}</h3>
+        <p class="text-xs text-gray-600 mb-3"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fas fa-star text-yellow-400 text-xs"></i>
+          <span class="text-sm font-semibold text-gray-900">${listing.rating}</span>
+          <span class="text-xs text-gray-500">${listing.beds} beds · ${listing.baths} baths</span>
+        </div>
+        <div class="mt-auto pt-3 border-t border-gray-100">
+          <div class="flex items-baseline gap-1 mb-3">
+            <span class="text-xl font-bold text-gray-900">$${listing.price}</span>
+            <span class="text-xs text-gray-600">per night</span>
+          </div>
+          <button class="btn btn-primary w-full btn-sm" onclick="openListing('${listing._id}')">
+            <i class="fas fa-search"></i> View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUEST: MY BOOKINGS
+// ═══════════════════════════════════════════════════════════
+
+function renderMyBookings() {
+  const bookings = getBookings().filter(b => b.guestId === currentUser.id);
+  const listings = getListings();
+  const container = document.getElementById('bookings-container');
+
+  if (!bookings || bookings.length === 0) {
+    container.innerHTML = `
+      <div class="bg-white rounded-lg border border-gray-100 p-12 text-center">
+        <i class="fas fa-calendar" style="font-size: 48px; color: var(--gray-300); margin-bottom: 16px; display: block;"></i>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">No bookings yet</h2>
+        <p class="text-gray-600 mb-6">Explore our properties and make your first booking</p>
+        <button class="btn btn-primary" onclick="showView('browse')">
+          <i class="fas fa-search"></i>
+          Browse Properties
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = bookings.map(booking => {
+    const listing = listings.find(l => l._id === booking.listingId);
+    if (!listing) return '';
+
+    // ── STRICT CONTACT RULE ──────────────────────────────────────────
+    // Host contact number is ONLY visible when booking.status === 'approved'.
+    // For 'pending' or 'rejected', show "Hidden until approved" with a lock icon.
+    let contactHtml;
+    if (booking.status === 'approved') {
+      // Status is explicitly "approved" → reveal the contact number
+      contactHtml = `<div class="contact-revealed"><i class="fas fa-phone" style="margin-right:6px;"></i>${listing.contactNumber}</div>`;
+    } else {
+      // Status is "pending" or "rejected" → hide the contact number
+      contactHtml = `<div class="contact-hidden"><i class="fas fa-lock"></i> Hidden until approved</div>`;
+    }
+    // ─────────────────────────────────────────────────────────────────
+
+    const statusColors = {
+      'pending': 'bg-yellow-50 border-yellow-200',
+      'approved': 'bg-green-50 border-green-200',
+      'rejected': 'bg-red-50 border-red-200'
+    };
+
+    return `
+      <div class="bg-white rounded-lg border border-gray-100 p-6 ${statusColors[booking.status] || ''}">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <img src="${listing.image}" class="w-full h-40 object-cover rounded-lg shadow-sm" />
+          </div>
+          <div class="md:col-span-2">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">${listing.name}</h3>
+                <p class="text-sm text-gray-600"><i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>${listing.location}</p>
+              </div>
+              <div class="badge badge-${booking.status}">
+                ${booking.status === 'approved' ? '<i class="fas fa-check-circle"></i>' : booking.status === 'rejected' ? '<i class="fas fa-times-circle"></i>' : '<i class="fas fa-clock"></i>'}
+                ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-xs font-semibold text-gray-700 mb-1">Check In</p>
+                  <p class="text-sm font-medium text-gray-900"><i class="fas fa-calendar-alt" style="margin-right: 6px; color: var(--brand);"></i>${booking.startDate}</p>
+                </div>
+                <div>
+                  <p class="text-xs font-semibold text-gray-700 mb-1">Check Out</p>
+                  <p class="text-sm font-medium text-gray-900"><i class="fas fa-calendar-alt" style="margin-right: 6px; color: var(--brand);"></i>${booking.endDate}</p>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-gray-700 mb-2">Host Contact</p>
+                ${contactHtml}
+              </div>
+              <div class="pt-3 border-t border-gray-200">
+                <p class="text-xs text-gray-600">Total Price: <span class="text-lg font-bold text-gray-900">$${booking.totalPrice.toFixed(2)}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HOST: MY LISTINGS
+// ═══════════════════════════════════════════════════════════
+
+function renderMyListings() {
+  const listings = getListings().filter(l => l.hostId === currentUser.id);
+  renderHostListingsTable(listings);
+  updateHostStats();
+}
+
+function renderHostListingsTable(listings) {
+  const tbody = document.getElementById('host-listings-body');
+  
+  if (!listings || listings.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="padding: 40px 16px; text-align: center; border: none;">
+          <i class="fas fa-home" style="font-size: 40px; color: var(--gray-300); display: block; margin-bottom: 12px;"></i>
+          <p style="color: var(--gray-600); font-weight: 500; margin: 8px 0;">No properties yet</p>
+          <p style="color: var(--gray-500); font-size: 13px;">Create your first listing to start welcoming guests</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = listings.map(listing => `
+    <tr>
+      <td class="px-4 py-3 font-semibold text-gray-900">${listing.name}</td>
+      <td class="px-4 py-3 text-sm text-gray-600 capitalize"><span style="background: var(--brand-light); color: var(--brand); padding: 4px 8px; border-radius: 6px; font-weight: 500; font-size: 12px;">${listing.type}</span></td>
+      <td class="px-4 py-3 text-sm text-gray-600">${listing.location}</td>
+      <td class="px-4 py-3 text-sm font-semibold text-gray-900">$${listing.price}</td>
+      <td class="px-4 py-3"><span class="badge badge-primary"><i class="fas fa-star"></i> ${listing.rating}</span></td>
+      <td class="px-4 py-3 flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="editListing('${listing._id}')" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteListing('${listing._id}')" title="Delete">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateHostStats() {
+  const listings = getListings().filter(l => l.hostId === currentUser.id);
+  const bookings = getBookings().filter(b => {
+    const listing = getListings().find(l => l._id === b.listingId);
+    return listing && listing.hostId === currentUser.id && b.status === 'approved';
+  });
+
+  let totalEarnings = 0;
+  bookings.forEach(b => totalEarnings += b.totalPrice);
+
+  const occupiedNights = bookings.reduce((sum, b) => {
+    return sum + Math.ceil((new Date(b.endDate) - new Date(b.startDate)) / (1000 * 60 * 60 * 24));
+  }, 0);
+
+  document.getElementById('host-earnings').textContent = totalEarnings.toFixed(0);
+  document.getElementById('host-active-listings').textContent = listings.length;
+  document.getElementById('host-occupancy').textContent = listings.length > 0 ? Math.min(Math.round((occupiedNights / (listings.length * 30)) * 100), 100) : 0;
+}
+
+function showCreateListing() {
+  editingListingId = null;
+  document.getElementById('form-title').textContent = 'Create New Property';
+  document.getElementById('listing-name').value = '';
+  document.getElementById('listing-type').value = '';
+  document.getElementById('listing-price').value = '';
+  document.getElementById('listing-location').value = '';
+  document.getElementById('listing-contact').value = '';
+  document.getElementById('listing-description').value = '';
+  document.getElementById('listing-image').value = '';
+  clearImageUpload();
+  document.getElementById('create-listing-modal').classList.add('open');
+}
+
+function editListing(id) {
+  const listing = getListings().find(l => l._id === id);
+  if (!listing) return;
+
+  editingListingId = id;
+  document.getElementById('form-title').textContent = 'Edit Property';
+  document.getElementById('listing-name').value = listing.name;
+  document.getElementById('listing-type').value = listing.type;
+  document.getElementById('listing-price').value = listing.price;
+  document.getElementById('listing-location').value = listing.location;
+  document.getElementById('listing-contact').value = listing.contactNumber;
+  document.getElementById('listing-description').value = listing.description;
+  document.getElementById('listing-image').value = listing.image;
+
+  // Show existing image in preview
+  if (listing.image) {
+    document.getElementById('image-preview').src = listing.image;
+    document.getElementById('image-preview-wrap').style.display = 'block';
+    document.getElementById('image-upload-area').style.display = 'none';
+  } else {
+    clearImageUpload();
+  }
+
+  document.getElementById('create-listing-modal').classList.add('open');
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('❌ Image must be under 5MB', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    document.getElementById('listing-image').value = base64;
+    document.getElementById('image-preview').src = base64;
+    document.getElementById('image-preview-wrap').style.display = 'block';
+    document.getElementById('image-upload-area').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImageUpload() {
+  document.getElementById('listing-image').value = '';
+  document.getElementById('listing-image-file').value = '';
+  document.getElementById('image-preview-wrap').style.display = 'none';
+  document.getElementById('image-upload-area').style.display = 'block';
+}
+
+function saveListing() {
+  const name = document.getElementById('listing-name').value.trim();
+  const type = document.getElementById('listing-type').value.trim();
+  const price = parseFloat(document.getElementById('listing-price').value);
+  const location = document.getElementById('listing-location').value.trim();
+  const contact = document.getElementById('listing-contact').value.trim();
+  const description = document.getElementById('listing-description').value.trim();
+  const image = document.getElementById('listing-image').value.trim();
+
+  // Validation
+  if (!name) {
+    showToast('❌ Please enter property name', 'error');
+    return;
+  }
+  if (!type) {
+    showToast('❌ Please select property type', 'error');
+    return;
+  }
+  if (!price || price <= 0) {
+    showToast('❌ Please enter valid price', 'error');
+    return;
+  }
+  if (!location) {
+    showToast('❌ Please enter location', 'error');
+    return;
+  }
+  if (!contact) {
+    showToast('❌ Please enter contact number', 'error');
+    return;
+  }
+  if (!description) {
+    showToast('❌ Please enter description', 'error');
+    return;
+  }
+  if (!image) {
+    showToast('❌ Please upload a property image', 'error');
+    return;
+  }
+
+  const listings = getListings();
+
+  if (editingListingId) {
+    // Update existing
+    const idx = listings.findIndex(l => l._id === editingListingId);
+    if (idx >= 0) {
+      listings[idx] = {
+        ...listings[idx],
+        name, type, price, location, contactNumber: contact, description, image
+      };
+      showToast('✏️ Property updated successfully!', 'success');
+    }
+  } else {
+    // Create new
+    const newId = 'list_' + Date.now() + Math.random().toString(36).substr(2, 9);
+    listings.push({
+      _id: newId,
+      name, type, price, location,
+      description, image,
+      hostId: currentUser.id,
+      hostName: currentUser.name,
+      contactNumber: contact,
+      rating: 4.8,
+      beds: Math.floor(Math.random() * 5) + 1,
+      baths: Math.floor(Math.random() * 3) + 1
+    });
+    showToast('✨ Property created successfully!', 'success');
+  }
+
+  saveListings(listings);
+  closeCreateListing();
+  renderMyListings();
+}
+
+function closeCreateListing() {
+  document.getElementById('create-listing-modal').classList.remove('open');
+}
+
+function deleteListing(id) {
+  if (!confirm('🗑️ Are you sure? This property will be permanently deleted.')) return;
+  const listings = getListings().filter(l => l._id !== id);
+  saveListings(listings);
+  renderMyListings();
+  showToast('✓ Property deleted', 'success');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HOST: BOOKING REQUESTS
+// ═══════════════════════════════════════════════════════════
+
+function renderBookingRequests() {
+  const hostListings = getListings().filter(l => l.hostId === currentUser.id);
+  const bookings = getBookings().filter(b => {
+    return hostListings.some(l => l._id === b.listingId);
+  });
+
+  const listings = getListings();
+  const tbody = document.getElementById('booking-requests-body');
+
+  if (!bookings || bookings.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="padding: 40px 16px; text-align: center; border: none;">
+          <i class="fas fa-inbox" style="font-size: 40px; color: var(--gray-300); display: block; margin-bottom: 12px;"></i>
+          <p style="color: var(--gray-600); font-weight: 500; margin: 8px 0;">No booking requests yet</p>
+          <p style="color: var(--gray-500); font-size: 13px;">Guests will see your listings when they browse</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = bookings.map(booking => {
+    const listing = listings.find(l => l._id === booking.listingId);
+    const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24));
+    
+    return `
+      <tr>
+        <td class="px-4 py-3 text-sm font-semibold text-gray-900">${booking.guestName}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${listing?.name || '—'}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${booking.startDate} <i class="fas fa-arrow-right" style="margin: 0 4px; color: var(--gray-400);"></i> ${booking.endDate}</td>
+        <td class="px-4 py-3"><span class="badge badge-${booking.status}"><i class="fas fa-clock"></i> ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span></td>
+        <td class="px-4 py-3 flex gap-2">
+          ${booking.status === 'pending' ? `
+            <button class="btn btn-success btn-sm" onclick="approveBooking('${booking._id}')" title="Approve">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="rejectBooking('${booking._id}')" title="Reject">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          ` : `<span style="color: var(--gray-500); font-size: 12px; font-weight: 500;">—</span>`}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function approveBooking(id) {
+  const bookings = getBookings();
+  const booking = bookings.find(b => b._id === id);
+  if (!booking) return;
+
+  const listing = getListings().find(l => l._id === booking.listingId);
+  
+  booking.status = 'approved';
+  saveBookings(bookings);
+  renderBookingRequests();
+  showToast(`✓ Booking from ${booking.guestName} approved!`, 'success');
+}
+
+function rejectBooking(id) {
+  const bookings = getBookings();
+  const booking = bookings.find(b => b._id === id);
+  if (!booking) return;
+
+  const listing = getListings().find(l => l._id === booking.listingId);
+  
+  booking.status = 'rejected';
+  saveBookings(bookings);
+  renderBookingRequests();
+  showToast(`✗ Booking from ${booking.guestName} rejected`, 'error');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN: DASHBOARD
+// ═══════════════════════════════════════════════════════════
+
+function renderAdminDashboard() {
+  const listings = getListings();
+  const bookings = getBookings();
+  const users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+
+  let totalRevenue = 0;
+  bookings.forEach(b => {
+    if (b.status === 'approved') totalRevenue += b.totalPrice;
+  });
+
+  document.getElementById('admin-users-count').textContent = users.length;
+  document.getElementById('admin-listings-count').textContent = listings.length;
+  document.getElementById('admin-bookings-count').textContent = bookings.length;
+  document.getElementById('admin-revenue-count').textContent = totalRevenue.toFixed(0);
+
+  // Listings table
+  const listingsBody = document.getElementById('admin-listings-body');
+  if (!listings || listings.length === 0) {
+    listingsBody.innerHTML = `
+      <tr>
+        <td colspan="6" style="padding: 40px 16px; text-align: center; border: none;">
+          <p style="color: var(--gray-500); font-size: 13px;">No listings in the system</p>
+        </td>
+      </tr>
+    `;
+  } else {
+    listingsBody.innerHTML = listings.map(l => `
+      <tr class="clickable-row" onclick="openListing('${l._id}')">
+        <td class="px-4 py-3 font-semibold text-gray-900">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${l.image}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'"/>
+            <span>${l.name}</span>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-600">${l.hostName}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${l.location}</td>
+        <td class="px-4 py-3 text-sm font-semibold text-gray-900">$${l.price}</td>
+        <td class="px-4 py-3 text-sm capitalize"><span style="background: var(--brand-light); color: var(--brand); padding: 4px 8px; border-radius: 6px; font-weight: 500; font-size: 12px;">${l.type}</span></td>
+        <td class="px-4 py-3" onclick="event.stopPropagation()">
+          <button class="btn btn-danger btn-sm" onclick="adminDeleteListing('${l._id}')" title="Delete listing">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // Bookings table
+  const bookingsBody = document.getElementById('admin-bookings-body');
+  if (!bookings || bookings.length === 0) {
+    bookingsBody.innerHTML = `
+      <tr>
+        <td colspan="6" style="padding: 40px 16px; text-align: center; border: none;">
+          <p style="color: var(--gray-500); font-size: 13px;">No bookings in the system</p>
+        </td>
+      </tr>
+    `;
+  } else {
+    bookingsBody.innerHTML = bookings.map(b => {
+      const listing = listings.find(l => l._id === b.listingId);
+      const nights = Math.ceil((new Date(b.endDate) - new Date(b.startDate)) / (1000 * 60 * 60 * 24));
+      return `
+        <tr class="clickable-row" onclick="openBookingDetail('${b._id}')">
+          <td class="px-4 py-3 text-sm text-gray-600">${b.guestName}</td>
+          <td class="px-4 py-3 text-sm font-semibold text-gray-900">${listing?.name || '—'}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${b.startDate}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">${b.endDate}</td>
+          <td class="px-4 py-3 text-sm font-medium text-gray-900 text-center">${nights}</td>
+          <td class="px-4 py-3"><span class="badge badge-${b.status}"><i class="fas fa-info-circle"></i> ${b.status.charAt(0).toUpperCase() + b.status.slice(1)}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
+
+function adminDeleteListing(id) {
+  const listing = getListings().find(l => l._id === id);
+  if (!listing) return;
+  showUIConfirm({
+    icon: '🛡️',
+    iconBg: '#FEE2E2',
+    title: 'Admin: Delete Listing?',
+    body: `Permanently delete "${listing.name}" by ${listing.hostName}? All associated data will be removed.`,
+    confirmLabel: 'Delete Listing',
+    confirmBg: 'var(--danger)',
+    onConfirm: () => {
+      const listings = getListings().filter(l => l._id !== id);
+      saveListings(listings);
+      renderAdminDashboard();
+      renderAdminAllListings();
+      showToast('Listing deleted by admin', 'success');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN: ALL LISTINGS (separate full-page view)
+// ═══════════════════════════════════════════════════════════
+
+function renderAdminAllListings() {
+  const listings = getListings();
+  const tbody = document.getElementById('admin-all-listings-body');
+  if (!tbody) return;
+  if (!listings.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--gray-500);">No listings in the system</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = listings.map(l => `
+    <tr class="clickable-row" onclick="openListing('${l._id}')">
+      <td class="px-4 py-3">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="${l.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'"/>
+          <div>
+            <p class="font-semibold text-gray-900" style="margin:0;font-size:14px;">${l.name}</p>
+            <p style="margin:0;font-size:12px;color:var(--gray-500);">${l.beds} beds · ${l.baths} baths</p>
+          </div>
+        </div>
+      </td>
+      <td class="px-4 py-3 text-sm text-gray-600">${l.hostName}</td>
+      <td class="px-4 py-3 text-sm text-gray-600"><i class="fas fa-map-marker-alt" style="margin-right:4px;color:var(--accent);font-size:11px;"></i>${l.location}</td>
+      <td class="px-4 py-3 text-sm font-bold text-gray-900">$${l.price}<span style="font-weight:400;color:var(--gray-500);font-size:11px;">/night</span></td>
+      <td class="px-4 py-3"><span style="background:var(--brand-light);color:var(--brand);padding:4px 10px;border-radius:20px;font-weight:600;font-size:12px;text-transform:capitalize;">${l.type.replace('_',' ')}</span></td>
+      <td class="px-4 py-3 text-sm"><i class="fas fa-star" style="color:#FBBF24;margin-right:3px;"></i><span class="font-semibold text-gray-900">${l.rating}</span></td>
+      <td class="px-4 py-3" onclick="event.stopPropagation()">
+        <button class="btn btn-danger btn-sm" onclick="adminDeleteListing('${l._id}')">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN: ALL BOOKINGS (separate full-page view)
+// ═══════════════════════════════════════════════════════════
+
+function renderAdminAllBookings() {
+  const bookings = getBookings();
+  const listings = getListings();
+  const tbody = document.getElementById('admin-bookings-all-body');
+  if (!tbody) return;
+  if (!bookings.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--gray-500);">No bookings in the system</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = bookings.map(b => {
+    const l = listings.find(x => x._id === b.listingId);
+    const nights = Math.max(0, Math.ceil((new Date(b.endDate) - new Date(b.startDate)) / 86400000));
+    return `
+      <tr class="clickable-row" onclick="openBookingDetail('${b._id}')">
+        <td class="px-4 py-3 text-sm font-semibold text-gray-900">${b.guestName}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${l?.name || '—'}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${b.startDate}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">${b.endDate}</td>
+        <td class="px-4 py-3 text-sm text-center font-medium text-gray-900">${nights}</td>
+        <td class="px-4 py-3 text-sm font-bold text-gray-900">$${b.totalPrice?.toFixed(2) || '—'}</td>
+        <td class="px-4 py-3"><span class="badge badge-${b.status}">
+          <i class="fas ${b.status==='approved'?'fa-check-circle':b.status==='rejected'?'fa-times-circle':'fa-clock'}"></i>
+          ${b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+        </span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN: ALL USERS
+// ═══════════════════════════════════════════════════════════
+
+function renderAdminUsers() {
+  const users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+  const listings = getListings();
+  const bookings = getBookings();
+  const tbody = document.getElementById('admin-users-body');
+  const roleColors = {
+    guest: { bg:'#DBEAFE', color:'#1D4ED8', icon:'fa-user' },
+    host:  { bg:'#D1FAE5', color:'#065F46', icon:'fa-key' },
+    admin: { bg:'#EDE9FE', color:'#5B21B6', icon:'fa-shield-alt' }
+  };
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--gray-500);">No users found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const cfg = roleColors[u.role] || roleColors.guest;
+    const userListings = listings.filter(l => l.hostId === u.id).length;
+    const userBookings = bookings.filter(b => b.guestId === u.id).length;
+    const initials = u.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    return `
+      <tr>
+        <td class="px-4 py-3">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:${cfg.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;color:${cfg.color};">${initials}</div>
+            <div>
+              <p class="font-semibold text-gray-900" style="margin:0;font-size:14px;">${u.name}</p>
+            </div>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-600">${u.email}</td>
+        <td class="px-4 py-3">
+          <span style="display:inline-flex;align-items:center;gap:5px;background:${cfg.bg};color:${cfg.color};padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;text-transform:capitalize;">
+            <i class="fas ${cfg.icon}" style="font-size:10px;"></i>${u.role}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-sm text-gray-500" style="font-family:monospace;font-size:12px;">${u.id}</td>
+        <td class="px-4 py-3 text-sm text-gray-600">
+          ${u.role === 'host' ? `<span style="background:#F0FDF4;color:#065F46;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;"><i class="fas fa-home" style="margin-right:4px;font-size:10px;"></i>${userListings} listing${userListings!==1?'s':''}</span>` : ''}
+          ${u.role === 'guest' ? `<span style="background:#EFF6FF;color:#1D4ED8;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;"><i class="fas fa-calendar" style="margin-right:4px;font-size:10px;"></i>${userBookings} booking${userBookings!==1?'s':''}</span>` : ''}
+          ${u.role === 'admin' ? `<span style="background:#EDE9FE;color:#5B21B6;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;"><i class="fas fa-shield-alt" style="margin-right:4px;font-size:10px;"></i>Full access</span>` : ''}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOKING DETAIL MODAL
+// ═══════════════════════════════════════════════════════════
+
+function openBookingDetail(bookingId) {
+  const booking = getBookings().find(b => b._id === bookingId);
+  if (!booking) return;
+  const listing = getListings().find(l => l._id === booking.listingId) || {};
+  const nights = Math.max(0, Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / 86400000));
+  const statusCfg = {
+    pending:  { bg:'#FEF3C7', color:'#92400E', icon:'fa-clock' },
+    approved: { bg:'#D1FAE5', color:'#065F46', icon:'fa-check-circle' },
+    rejected: { bg:'#FEE2E2', color:'#991B1B', icon:'fa-times-circle' }
+  }[booking.status] || { bg:'#F3F4F6', color:'#374151', icon:'fa-info-circle' };
+
+  document.getElementById('booking-detail-body').innerHTML = `
+    <div style="border-radius:12px;overflow:hidden;border:1px solid var(--gray-200);margin-bottom:20px;cursor:pointer;" onclick="closeBookingDetail();openListing('${listing._id}')">
+      <div style="height:120px;background:url('${listing.image}') center/cover;position:relative;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.5),transparent);"></div>
+        <div style="position:absolute;bottom:10px;left:14px;color:white;">
+          <p style="font-weight:700;font-size:15px;margin:0;">${listing.name || 'Unknown Listing'}</p>
+          <p style="font-size:12px;opacity:0.85;margin:0;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location || ''}</p>
+        </div>
+        <div style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;">
+          <i class="fas fa-eye" style="margin-right:4px;"></i>View listing
+        </div>
+      </div>
+    </div>
+    <div style="background:${statusCfg.bg};color:${statusCfg.color};border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:8px;margin-bottom:20px;font-weight:600;font-size:14px;">
+      <i class="fas ${statusCfg.icon}"></i>
+      Booking ${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+      <span style="margin-left:auto;font-size:12px;font-weight:500;opacity:0.7;">ID: ${booking._id}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div style="background:var(--gray-50);border-radius:10px;padding:14px;">
+        <p style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Guest</p>
+        <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${booking.guestName}</p>
+        <p style="font-size:12px;color:var(--gray-500);margin:0;">${booking.guestId}</p>
+      </div>
+      <div style="background:var(--gray-50);border-radius:10px;padding:14px;">
+        <p style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Host</p>
+        <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${listing.hostName || '—'}</p>
+        <p style="font-size:12px;color:var(--gray-500);margin:0;">${listing.hostId || ''}</p>
+      </div>
+      <div style="background:var(--gray-50);border-radius:10px;padding:14px;">
+        <p style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Check In</p>
+        <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;"><i class="fas fa-calendar-alt" style="color:var(--brand);margin-right:5px;"></i>${booking.startDate}</p>
+      </div>
+      <div style="background:var(--gray-50);border-radius:10px;padding:14px;">
+        <p style="font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin:0 0 4px;">Check Out</p>
+        <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;"><i class="fas fa-calendar-alt" style="color:var(--brand);margin-right:5px;"></i>${booking.endDate}</p>
+      </div>
+    </div>
+    <div style="border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:var(--gray-600);">
+        <span>$${listing.price || 0} × ${nights} night${nights!==1?'s':''}</span>
+        <span class="font-semibold text-gray-900">$${((listing.price||0)*nights).toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;color:var(--gray-600);">
+        <span>Platform fee (15%)</span>
+        <span class="font-semibold text-gray-900">$${((listing.price||0)*nights*0.15).toFixed(2)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:1px solid var(--gray-200);font-size:16px;font-weight:700;color:var(--gray-900);">
+        <span>Total</span>
+        <span style="color:var(--brand);">$${booking.totalPrice?.toFixed(2) || '—'}</span>
+      </div>
+    </div>
+    <div style="background:#ECFDF5;border:1px solid #6EE7B7;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#065F46;">
+      <i class="fas fa-phone"></i>
+      <span>Host contact: ${listing.contactNumber || 'N/A'}</span>
+      <span style="margin-left:auto;font-size:11px;background:#D1FAE5;padding:2px 8px;border-radius:10px;">Admin view</span>
+    </div>
+  `;
+  document.getElementById('booking-detail-modal').classList.add('open');
+}
+
+function closeBookingDetail() {
+  document.getElementById('booking-detail-modal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI CONFIRM MODAL (replaces browser confirm())
+// ═══════════════════════════════════════════════════════════
+
+let _uiConfirmCallback = null;
+
+function showUIConfirm({ icon, iconBg, title, body, confirmLabel, confirmBg, onConfirm }) {
+  document.getElementById('ui-confirm-icon').textContent = icon;
+  document.getElementById('ui-confirm-icon').style.background = iconBg || '#FEE2E2';
+  document.getElementById('ui-confirm-title').textContent = title;
+  document.getElementById('ui-confirm-body').textContent = body;
+  const okBtn = document.getElementById('ui-confirm-ok');
+  okBtn.textContent = confirmLabel || 'Confirm';
+  okBtn.style.background = confirmBg || 'var(--danger)';
+  okBtn.onmouseover = function() { this.style.filter = 'brightness(0.88)'; };
+  okBtn.onmouseout  = function() { this.style.filter = ''; };
+  _uiConfirmCallback = onConfirm;
+  okBtn.onclick = () => { closeUIConfirm(); if (_uiConfirmCallback) _uiConfirmCallback(); };
+  const modal = document.getElementById('ui-confirm-modal');
+  modal.style.display = 'flex';
+}
+
+function closeUIConfirm() {
+  document.getElementById('ui-confirm-modal').style.display = 'none';
+  _uiConfirmCallback = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// UI UTILITIES
+// ═══════════════════════════════════════════════════════════
+
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-msg');
+  const iconEl = document.getElementById('toast-icon');
+
+  msgEl.textContent = msg;
+  toast.className = 'toast show ' + type;
+
+  const icons = {
+    success: '<i class="fas fa-check-circle"></i>',
+    error: '<i class="fas fa-times-circle"></i>',
+    warning: '<i class="fas fa-exclamation-triangle"></i>'
+  };
+
+  iconEl.innerHTML = icons[type] || icons.success;
+
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// LANDING PAGE FEATURE DETAIL MODAL
+// ═══════════════════════════════════════════════════════════
+
+const FEATURE_DETAILS = {
+  verified: {
+    icon: 'fa-shield-check', iconBg: '#EFF6FF', iconColor: '#1B6AFF', accentColor: '#1B6AFF',
+    title: 'Verified Listings',
+    tagline: 'Every property on StayEZ is real, inspected, and approved.',
+    points: [
+      { icon: 'fa-search', label: 'Manual Review', desc: 'Our team personally vets each property submission for accuracy and quality.' },
+      { icon: 'fa-camera', label: 'Photo Verification', desc: 'We cross-check listing photos with the actual property to ensure authenticity.' },
+      { icon: 'fa-id-badge', label: 'Host Identity Check', desc: 'Every host undergoes identity verification before listing their space.' },
+      { icon: 'fa-star', label: 'Ongoing Quality Control', desc: 'Listings are reviewed periodically based on guest feedback and ratings.' },
+    ],
+    cta: 'Browse Verified Listings', ctaFn: "closeFeatureDetail(); showLoginModal('guest');"
+  },
+  booking: {
+    icon: 'fa-bolt', iconBg: '#F0FDF4', iconColor: '#10B981', accentColor: '#10B981',
+    title: 'Instant Booking',
+    tagline: 'Find your stay, pick your dates, confirm in seconds.',
+    points: [
+      { icon: 'fa-calendar-check', label: 'Real-Time Availability', desc: 'See up-to-date availability for every listing — no stale calendars.' },
+      { icon: 'fa-lock', label: 'Secure Transactions', desc: 'Your booking and payment data is protected with industry-standard encryption.' },
+      { icon: 'fa-bell', label: 'Instant Confirmation', desc: 'Receive booking confirmation and host contact details immediately after approval.' },
+      { icon: 'fa-undo', label: 'Easy Modifications', desc: 'Need to change dates? Manage your booking from your account dashboard anytime.' },
+    ],
+    cta: 'Book a Stay', ctaFn: "closeFeatureDetail(); showLoginModal('guest');"
+  },
+  support: {
+    icon: 'fa-headset', iconBg: '#FEF9C3', iconColor: '#D97706', accentColor: '#D97706',
+    title: '24/7 Support',
+    tagline: 'We\'re here for you at every step of your journey.',
+    points: [
+      { icon: 'fa-comments', label: 'Live Chat', desc: 'Connect with a real support agent in under 2 minutes, any time of day or night.' },
+      { icon: 'fa-envelope', label: 'Email Support', desc: 'Reach us at support@stayez.ph and we\'ll respond within 2 hours guaranteed.' },
+      { icon: 'fa-phone', label: 'Phone Line', desc: 'Call our dedicated support line for urgent issues — available 24/7, 365 days a year.' },
+      { icon: 'fa-book', label: 'Help Center', desc: 'Browse our extensive knowledge base for instant answers to common questions.' },
+    ],
+    cta: 'Get in Touch', ctaFn: 'closeFeatureDetail();'
+  },
+  favorites: {
+    icon: 'fa-heart', iconBg: '#FEE2E2', iconColor: '#EF4444', accentColor: '#EF4444',
+    title: 'Save Favorites',
+    tagline: 'Build your dream shortlist and never lose track of a great property.',
+    points: [
+      { icon: 'fa-bookmark', label: 'One-Tap Save', desc: 'Hit the heart icon on any listing to instantly add it to your favorites list.' },
+      { icon: 'fa-sync', label: 'Synced Across Devices', desc: 'Your saved properties are stored in your account and available everywhere you log in.' },
+      { icon: 'fa-share-alt', label: 'Compare & Decide', desc: 'View all your saved properties side by side to find the perfect match.' },
+      { icon: 'fa-bell', label: 'Price Drop Alerts', desc: 'Get notified when a property on your wishlist drops in price or opens new dates.' },
+    ],
+    cta: 'Start Saving Properties', ctaFn: "closeFeatureDetail(); showLoginModal('guest');"
+  }
+};
+
+function showFeatureDetail(key) {
+  const d = FEATURE_DETAILS[key];
+  if (!d) return;
+  const modal = document.getElementById('feature-detail-modal');
+  document.getElementById('fd-icon').className = `fas ${d.icon}`;
+  document.getElementById('fd-icon').style.color = d.iconColor;
+  document.getElementById('fd-icon-wrap').style.background = d.iconBg;
+  document.getElementById('fd-title').textContent = d.title;
+  document.getElementById('fd-tagline').textContent = d.tagline;
+  document.getElementById('fd-points').innerHTML = d.points.map(p => `
+    <div style="display:flex;gap:14px;padding:16px 0;border-bottom:1px solid #F1F5F9;">
+      <div style="width:38px;height:38px;border-radius:10px;background:${d.iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="fas ${p.icon}" style="color:${d.iconColor};font-size:15px;"></i>
+      </div>
+      <div>
+        <p style="font-size:14px;font-weight:700;color:#0F172A;margin:0 0 4px;">${p.label}</p>
+        <p style="font-size:13px;color:#64748B;margin:0;line-height:1.6;">${p.desc}</p>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('fd-cta').textContent = d.cta;
+  document.getElementById('fd-cta').style.background = d.accentColor;
+  document.getElementById('fd-cta').setAttribute('onclick', d.ctaFn);
+  modal.style.display = 'flex';
+}
+
+function closeFeatureDetail() {
+  document.getElementById('feature-detail-modal').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RATINGS SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+function getRatings() {
+  return JSON.parse(localStorage.getItem('stayez_ratings') || '[]');
+}
+function saveRatings(r) {
+  localStorage.setItem('stayez_ratings', JSON.stringify(r));
+}
+
+let ratingBookingId = null;
+let selectedStarVal = 0;
+
+const STAR_LABELS = { 1: 'Terrible', 2: 'Poor', 3: 'Okay', 4: 'Good', 5: 'Excellent!' };
+
+function selectStar(val) {
+  selectedStarVal = val;
+  document.querySelectorAll('.star-btn').forEach(b => {
+    b.style.color = parseInt(b.dataset.val) <= val ? '#F59E0B' : '#D1D5DB';
+    b.style.transform = parseInt(b.dataset.val) <= val ? 'scale(1.1)' : 'scale(1)';
+  });
+  document.getElementById('star-label').textContent = STAR_LABELS[val] || '';
+}
+
+function openRateModal(bookingId) {
+  ratingBookingId = bookingId;
+  selectedStarVal = 0;
+  const booking = getBookings().find(b => b._id === bookingId);
+  const listing = booking ? getListings().find(l => l._id === booking.listingId) : null;
+  document.getElementById('rate-modal-title').textContent = listing ? listing.name : 'Property';
+  document.getElementById('rate-comment').value = '';
+  document.getElementById('star-label').textContent = '';
+  document.getElementById('rate-error').style.display = 'none';
+  document.querySelectorAll('.star-btn').forEach(b => { b.style.color = '#D1D5DB'; b.style.transform = 'scale(1)'; });
+  document.getElementById('rate-modal').style.display = 'flex';
+}
+
+function closeRateModal() {
+  document.getElementById('rate-modal').style.display = 'none';
+  ratingBookingId = null; selectedStarVal = 0;
+}
+
+function submitRating() {
+  const errEl = document.getElementById('rate-error');
+  const errTxt = document.getElementById('rate-error-text');
+  if (!selectedStarVal) {
+    errTxt.textContent = 'Please select a star rating before submitting.';
+    errEl.style.display = 'flex'; return;
+  }
+  errEl.style.display = 'none';
+
+  const booking = getBookings().find(b => b._id === ratingBookingId);
+  if (!booking) return;
+  const listing = getListings().find(l => l._id === booking.listingId);
+  const comment = document.getElementById('rate-comment').value.trim();
+
+  const ratings = getRatings();
+  const existing = ratings.find(r => r.bookingId === ratingBookingId);
+  if (existing) {
+    existing.stars = selectedStarVal;
+    existing.comment = comment;
+    existing.updatedAt = new Date().toISOString();
+  } else {
+    ratings.push({
+      _id: 'rating_' + Date.now(),
+      bookingId: ratingBookingId,
+      listingId: booking.listingId,
+      listingName: listing ? listing.name : '—',
+      guestId: booking.guestId,
+      guestName: booking.guestName,
+      hostId: listing ? listing.hostId : null,
+      stars: selectedStarVal,
+      comment,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveRatings(ratings);
+  closeRateModal();
+  renderRatings();
+  showToast('⭐ Rating submitted! Thank you for your review.', 'success');
+}
+
+function renderStars(n, size = 14) {
+  return [1,2,3,4,5].map(i =>
+    `<i class="${i <= n ? 'fas' : 'far'} fa-star" style="color:${i <= n ? '#F59E0B' : '#D1D5DB'};font-size:${size}px;"></i>`
+  ).join('');
+}
+
+function renderRatings() {
+  const container = document.getElementById('ratings-container');
+  const ratings = getRatings();
+
+  if (currentRole === 'guest') {
+    document.getElementById('ratings-heading').textContent = 'My Reviews';
+    document.getElementById('ratings-subheading').textContent = 'Rate your stays and see your past reviews';
+
+    const bookings = getBookings().filter(b => b.guestId === currentUser.id && b.status === 'approved');
+    const listings = getListings();
+
+    if (bookings.length === 0) {
+      container.innerHTML = `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:48px 24px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#FEF9C3;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-star" style="font-size:26px;color:#D97706;"></i>
+          </div>
+          <p style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">No completed stays yet</p>
+          <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;">Once a host approves your booking, you can leave a review here.</p>
+          <button class="btn btn-primary btn-sm" onclick="showView('browse')"><i class="fas fa-search"></i> Browse Properties</button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = bookings.map(booking => {
+      const listing = listings.find(l => l._id === booking.listingId);
+      if (!listing) return '';
+      const myRating = ratings.find(r => r.bookingId === booking._id);
+      const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000*60*60*24));
+      return `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:24px;margin-bottom:16px;display:flex;gap:20px;align-items:flex-start;">
+          <img src="${listing.image}" style="width:88px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+              <div>
+                <h3 style="font-size:15px;font-weight:700;color:var(--gray-900);margin:0 0 4px;">${listing.name}</h3>
+                <p style="font-size:12px;color:var(--gray-500);margin:0;"><i class="fas fa-calendar-alt" style="margin-right:4px;color:var(--brand);"></i>${booking.startDate} → ${booking.endDate} &nbsp;·&nbsp; ${nights} night${nights!==1?'s':''}</p>
+              </div>
+              ${myRating
+                ? `<div style="text-align:right;flex-shrink:0;">
+                    <div style="margin-bottom:4px;">${renderStars(myRating.stars, 15)}</div>
+                    ${myRating.comment ? `<p style="font-size:12px;color:var(--gray-600);max-width:200px;text-align:right;font-style:italic;">"${myRating.comment}"</p>` : ''}
+                    <button onclick="openRateModal('${booking._id}')" style="font-size:12px;color:var(--brand);background:none;border:none;cursor:pointer;font-weight:600;padding:4px 0;"><i class="fas fa-edit" style="margin-right:4px;"></i>Edit</button>
+                  </div>`
+                : `<button onclick="openRateModal('${booking._id}')" class="btn btn-primary btn-sm" style="flex-shrink:0;"><i class="fas fa-star"></i> Rate Stay</button>`
+              }
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+  } else if (currentRole === 'host') {
+    document.getElementById('ratings-heading').textContent = 'Property Reviews';
+    document.getElementById('ratings-subheading').textContent = 'Ratings left by guests for your properties';
+
+    const myListingIds = getListings().filter(l => l.hostId === currentUser.id).map(l => l._id);
+    const myRatings = ratings.filter(r => myListingIds.includes(r.listingId));
+
+    if (myRatings.length === 0) {
+      container.innerHTML = `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:48px 24px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#F0FDF4;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-comment-alt" style="font-size:26px;color:#10B981;"></i>
+          </div>
+          <p style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">No reviews yet</p>
+          <p style="font-size:14px;color:var(--gray-500);">Guest reviews will appear here once they rate their stays.</p>
+        </div>`;
+      return;
+    }
+
+    // Group by listing
+    const byListing = {};
+    myRatings.forEach(r => {
+      if (!byListing[r.listingId]) byListing[r.listingId] = { name: r.listingName, reviews: [] };
+      byListing[r.listingId].reviews.push(r);
+    });
+
+    container.innerHTML = Object.entries(byListing).map(([lid, data]) => {
+      const avg = (data.reviews.reduce((s,r) => s + r.stars, 0) / data.reviews.length).toFixed(1);
+      return `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);margin-bottom:20px;overflow:hidden;">
+          <div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 4px;">${data.name}</h3>
+              <p style="font-size:12px;color:var(--gray-500);margin:0;">${data.reviews.length} review${data.reviews.length!==1?'s':''}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;background:#FEF9C3;border-radius:20px;padding:8px 16px;">
+              ${renderStars(Math.round(avg), 15)}
+              <span style="font-size:18px;font-weight:800;color:#D97706;margin-left:6px;">${avg}</span>
+            </div>
+          </div>
+          <div style="padding:0 24px 8px;">
+            ${data.reviews.map(r => `
+              <div style="padding:16px 0;border-bottom:1px solid var(--gray-100);">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;">
+                      <i class="fas fa-user" style="color:var(--brand);font-size:13px;"></i>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;color:var(--gray-800);">${r.guestName}</span>
+                  </div>
+                  <div>${renderStars(r.stars, 13)}</div>
+                </div>
+                ${r.comment ? `<p style="font-size:13px;color:var(--gray-600);margin:0;padding-left:40px;font-style:italic;">"${r.comment}"</p>` : '<p style="font-size:12px;color:var(--gray-400);margin:0;padding-left:40px;">No written review</p>'}
+                <p style="font-size:11px;color:var(--gray-400);margin:6px 0 0;padding-left:40px;">${new Date(r.createdAt).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+}
+
+initMock();
+
+(function boot() {
+  const saved = localStorage.getItem('stayez_session');
+  if (saved) {
+    try {
+      const session = JSON.parse(saved);
+      currentRole = session.role;
+      currentUser = session.user;
+      showRoleBadge(currentRole);
+      document.getElementById('logout-btn').classList.remove('hidden');
+      renderNav();
+      goHome();
+    } catch (e) {
+      localStorage.removeItem('stayez_session');
+      showView('landing');
+    }
+  } else {
+    showView('landing');
+  }
+})();
+</script>
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  LANDING FEATURE DETAIL MODAL                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="feature-detail-modal" style="display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,0.7);backdrop-filter:blur(6px);" onclick="if(event.target===this)closeFeatureDetail()">
+  <div style="background:white;border-radius:24px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.25);position:relative;animation:slideUp 0.3s ease-out;">
+    <button onclick="closeFeatureDetail()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:#F1F5F9;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#64748B;z-index:1;">
+      <i class="fas fa-times"></i>
+    </button>
+    <div style="padding:28px 28px 0;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div id="fd-icon-wrap" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i id="fd-icon" style="font-size:22px;"></i>
+        </div>
+        <div>
+          <h2 id="fd-title" style="font-size:20px;font-weight:800;color:#0F172A;margin:0 0 4px;"></h2>
+          <p id="fd-tagline" style="font-size:13px;color:#64748B;margin:0;line-height:1.5;"></p>
+        </div>
+      </div>
+    </div>
+    <div id="fd-points" style="padding:0 28px;max-height:360px;overflow-y:auto;"></div>
+    <div style="padding:20px 28px 24px;">
+      <button id="fd-cta" onclick="" style="width:100%;color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;"
+        onmouseover="this.style.opacity='0.88';" onmouseout="this.style.opacity='1';">
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Favorites | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">Wishlist</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Properties you've saved for later</p>
+  </div>
+
+  <div id="favorites-grid" class="listing-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
+    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<script>
+  requireAuth('guest');
+  renderHeader('favorites');
+
+  async function loadFavorites() {
+    const grid = document.getElementById('favorites-grid');
+    grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(3);
+
+    // TODO: Backend integration — wait for /api/favorites endpoint
+    const userId = getUser()._id;
+    const favIds = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+
+    if (favIds.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:80px 20px;background:white;border-radius:16px;border:1px dashed var(--gray-300);">
+          <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-heart" style="font-size:24px;color:#EF4444;"></i>
+          </div>
+          <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">Your wishlist is empty</h3>
+          <p style="color:var(--gray-500);font-size:14px;margin-bottom:24px;">As you search, tap the heart icon to save your favorite places.</p>
+          <button onclick="window.location.href='/guest/browse.html'" class="btn btn-primary">Start Browsing</button>
+        </div>`;
+      return;
+    }
+
+    let listings = [];
+    try {
+      listings = await apiGetListings();
+    } catch (e) {
+      console.warn("API failed, falling back to mock listings", e);
+      listings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+    }
+
+    const favListings = listings.filter(l => favIds.includes(l._id));
+
+    grid.innerHTML = favListings.map(listing => `
+      <div class="listing-card" onclick="window.location.href='/guest/browse.html'" style="cursor:pointer;">
+        <div class="listing-image">
+          <img src="${listing.image}" onerror="this.src='https://via.placeholder.com/500x300'"/>
+          <button class="heart-btn liked" onclick="event.stopPropagation(); removeFav('${listing._id}')">
+            <i class="fas fa-heart"></i>
+          </button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
+          <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 8px;">${listing.name}</h3>
+          <p style="font-size:14px;color:var(--gray-500);margin:0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
+          <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--gray-100);">
+            <span style="font-size:18px;font-weight:800;color:var(--gray-900);">$${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  function removeFav(id) {
+    const userId = getUser()._id;
+    let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+    favs = favs.filter(f => f !== id);
+    localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
+    showToast('Removed from favorites', 'success');
+    loadFavorites(); // re-render
+  }
+
+  loadFavorites();
+</script>
+
+</body>
+</html>

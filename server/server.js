@@ -1,4 +1,8 @@
-require("dotenv").config();
+require("dotenv").config({ path: './server/.env' });
+
+console.log("Current Working Directory:", process.cwd());
+console.log("Database URI from env:", process.env.MONGO_URI);
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");

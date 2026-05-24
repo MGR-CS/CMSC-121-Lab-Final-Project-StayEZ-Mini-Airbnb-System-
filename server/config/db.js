@@ -1,3 +1,10 @@
+// Source - https://stackoverflow.com/a/79874273
+// Posted by Vin
+// Retrieved 2026-05-24, License - CC BY-SA 4.0
+
+require("node:dns/promises").setServers(["1.1.1.1", "8.8.8.8"]);
+
+
 const mongoose = require("mongoose");
 
 /**
