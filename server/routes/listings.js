@@ -139,11 +139,11 @@ router.delete(
       const isAdmin = req.user.role === "admin";
 
       if(!listing) {
-        res.status(404).json({message: "No list found"});
+        return res.status(404).json({message: "No list found"});
       }
 
       if(!isOwner && !isAdmin) {
-        res.status(403).json({message: "Action not permitted"})
+        return  res.status(403).json({message: "Action not permitted"})
       }
 
       await Booking.deleteMany({listingId: id});

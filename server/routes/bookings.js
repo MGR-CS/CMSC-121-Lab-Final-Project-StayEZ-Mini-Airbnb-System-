@@ -93,7 +93,7 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
     })
 
     if(sameListing) {
-      res.status(409).json({ message: "Conflicting schedule with another existing booking"})
+      return res.status(409).json({ message: "Conflicting schedule with another existing booking"})
     }
 
     const newBooking = await Booking.create({
