@@ -70,20 +70,25 @@ The app will be available at `http://localhost:3000`.
 │   └── middleware/
 │       └── auth.js             # JWT protect + role-based authorize
 ├── public/
-│   ├── index.html              # Login / Register (public)
+│   ├── index.html              # Landing Page - Login / Register (public)
 │   ├── css/style.css           # Global stylesheet
 │   ├── js/api.js               # Shared fetch helper + session utils
+    ├── js/common.js            # Manages shared front-end UI features
 │   ├── guest/
 │   │   ├── browse.html         # Browse listings with search/filter/sort
 │   │   ├── booking.html        # Book a listing (date range input)
-│   │   └── my-bookings.html    # View own bookings + contact if approved
+│   │   ├── my-bookings.html    # View own bookings + contact if approved
+        ├── favorites.html      # View favorited listings
+    │   └── ratings.html        # View previously booked stays and rate them
 │   ├── host/
-│   │   ├── create-listing.html # Create a new listing
 │   │   ├── my-listings.html    # View/edit/delete own listings
-│   │   └── booking-requests.html # Approve or reject booking requests
+│   │   ├── booking-requests.html # Approve or reject booking requests
+        └── ratings.html        # View ratings on listed stays
 │   └── admin/
-│       ├── manage-listings.html # View and delete any listing
-│       └── all-bookings.html    # View all bookings system-wide
+│       ├── manage-listings.html # Overview
+        ├── all-listings.html    # View and delete listings
+        ├── all-users.html       # View and delete users
+│       └── all-bookings.html    # View and delete bookings
 ├── .env.example
 ├── .gitignore
 ├── package.json

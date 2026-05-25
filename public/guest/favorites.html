@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Browse Stays | StayEZ</title>
+  <title>Favorites | StayEZ</title>
   <link rel="stylesheet" href="/css/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
@@ -13,47 +13,20 @@
 <script src="/js/common.js"></script>
 
 <div class="page-content container-lg">
-  <!-- Search/Filter Bar -->
-  <div style="background:white;padding:20px 24px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:32px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--gray-100);">
-    <div style="display:flex;align-items:center;background:var(--gray-50);border-radius:12px;padding:8px 16px;flex:1;min-width:260px;border:1px solid var(--gray-200);">
-      <i class="fas fa-search" style="color:var(--gray-400);margin-right:12px;"></i>
-      <input type="text" id="search-input" placeholder="Search by name or location..." style="border:none;background:transparent;padding:0;font-size:15px;width:100%;box-shadow:none;" onkeyup="if(event.key==='Enter') applyFilters()">
-    </div>
-    
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      
-      <select id="filter-type" style="width:160px;padding:10px 14px;" onchange="applyFilters()">
-        <option value="">All Types</option>
-        <option value="villa">Villas</option>
-        <option value="apartment">Apartments</option>
-        <option value="house">Houses</option>
-      </select>
-      
-      <select id="sort-price" style="width:180px;padding:10px 14px;" onchange="applyFilters()">
-        <option value="">Sort: Recommended</option>
-        <option value="price_asc">Price: Low to High</option>
-        <option value="price_desc">Price: High to Low</option>
-      </select>
-      
-      <button onclick="applyFilters()" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
-    </div>
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">Wishlist</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Properties you've saved for later</p>
   </div>
 
-  <div id="listings-grid" class="listing-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
-    <!-- Loading Skeletons -->
-    <div class="listing-card skeleton" style="height:320px;"></div>
-    <div class="listing-card skeleton" style="height:320px;"></div>
-    <div class="listing-card skeleton" style="height:320px;"></div>
+  <div id="favorites-grid" class="listing-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
   </div>
 </div>
 
-<!-- Listing Detail Modal -->
 <div id="detail-modal" class="modal-overlay" onclick="if(event.target===this) closeDetailModal()">
   <div class="modal-content" style="width:100%;max-width:860px;display:flex;flex-direction:column;max-height:90vh;position:relative;">
     <button onclick="closeDetailModal()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><i class="fas fa-times"></i></button>
     
     <div style="display:flex;flex-wrap:wrap;height:100%;overflow-y:auto;">
-      <!-- Left side: Image & Info -->
       <div style="flex:1;min-width:320px;border-right:1px solid var(--gray-100);">
         <div style="width:100%;height:320px;background:var(--gray-200);">
           <img id="detail-img" src="" style="width:100%;height:100%;object-fit:cover;" onerror="src='noImage.png'" />
@@ -79,7 +52,6 @@
         </div>
       </div>
       
-      <!-- Right side: Booking Widget -->
       <div style="width:360px;padding:32px;background:var(--gray-50);display:flex;flex-direction:column;">
         <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--gray-200);box-shadow:0 12px 24px rgba(0,0,0,0.04);position:sticky;top:32px;">
           <div style="margin-bottom:24px;">
@@ -119,111 +91,72 @@
 
 <script>
   requireAuth('guest');
-  renderHeader('browse');
+  renderHeader('favorites');
 
   let currentListings = [];
   let selectedListing = null;
 
-  // Set minimum dates to today
+  // Restrict calendar configurations to current date and onwards
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('book-start').min = today;
   document.getElementById('book-end').min = today;
 
-  async function loadListings(params = {}) {
-    const grid = document.getElementById('listings-grid');
-    grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(6);
-    
-    try {
-      // Try real API first
-      currentListings = await apiGetListings(params);
-    } catch (e) {
-      console.warn("API failed", e);
-      // Fallback
-      let all = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
-      if (params.search) {
-        const s = params.search.toLowerCase();
-        all = all.filter(l => l.name.toLowerCase().includes(s) || l.location.toLowerCase().includes(s));
-      }
-      if (params.type) all = all.filter(l => l.type === params.type);
-      if (params.sort === 'price_asc') all.sort((a,b) => a.price - b.price);
-      if (params.sort === 'price_desc') all.sort((a,b) => b.price - a.price);
-      currentListings = all;
-    }
+  async function loadFavorites() {
+    const grid = document.getElementById('favorites-grid');
+    grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(3);
 
-    renderGrid();
-  }
+    const favIds = await apiGetFavorites();
 
-  async function renderGrid() {
-    const grid = document.getElementById('listings-grid');
-    if (currentListings.length === 0) {
+    if (favIds.length === 0) {
       grid.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:white;border-radius:16px;border:1px dashed var(--gray-300);">
-          <div style="width:64px;height:64px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-            <i class="fas fa-search" style="font-size:24px;color:var(--gray-400);"></i>
+        <div style="grid-column:1/-1;text-align:center;padding:80px 20px;background:white;border-radius:16px;border:1px dashed var(--gray-300);">
+          <div style="width:64px;height:64px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-heart" style="font-size:24px;color:#EF4444;"></i>
           </div>
-          <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">No stays found</h3>
-          <p style="color:var(--gray-500);font-size:14px;">Try adjusting your search or filters to find what you're looking for.</p>
-          <button onclick="clearFilters()" class="btn btn-secondary mt-4">Clear Filters</button>
+          <h3 style="font-size:18px;font-weight:700;color:var(--gray-900);margin-bottom:8px;">Your wishlist is empty</h3>
+          <p style="color:var(--gray-500);font-size:14px;margin-bottom:24px;">As you search, tap the heart icon to save your favorite places.</p>
+          <button onclick="window.location.href='/guest/browse.html'" class="btn btn-primary">Start Browsing</button>
         </div>`;
       return;
     }
 
-    const favs = await apiGetFavorites();
-
-    grid.innerHTML = currentListings.map(listing => {
-      const isFav = favs.includes(listing._id);
-      return `
-        <div class="listing-card" onclick="openDetail('${listing._id}')" style="cursor:pointer;">
-          <div class="listing-image">
-            <img src="${listing.image}" alt="${listing.name}" onerror="this.src='noImage.png'"/>
-            <button class="heart-btn ${isFav ? 'liked' : ''}" onclick="event.stopPropagation(); toggleFav('${listing._id}', this)">
-              <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
-            </button>
-          </div>
-          <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-              <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0;line-height:1.4;">${listing.name}</h3>
-            </div>
-            <p style="font-size:14px;color:var(--gray-500);margin:0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
-            <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid var(--gray-100);">
-              <div><span style="font-size:18px;font-weight:800;color:var(--gray-900);">₱${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span></div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  function applyFilters() {
-    const search = document.getElementById('search-input').value;
-    const type = document.getElementById('filter-type').value;
-    const sort = document.getElementById('sort-price').value;
-    loadListings({ search, search, type, sort });
-  }
-
-  function clearFilters() {
-    document.getElementById('search-input').value = '';
-    document.getElementById('filter-type').value = '';
-    document.getElementById('sort-price').value = '';
-    applyFilters();
-  }
-
-  // ─── Favorites (localStorage stub) ───
-  async function toggleFav(id, btnElement) {
-    let favs = await apiGetFavorites();
-    if (favs.includes(id)) {
-      favs = favs.filter(f => f !== id);
-      btnElement.classList.remove('liked');
-      btnElement.innerHTML = '<i class="far fa-heart"></i>';
-      await apiRemoveFavorite(id);
-    } else {
-      await apiAddFavorite(id);
-      btnElement.classList.add('liked');
-      btnElement.innerHTML = '<i class="fas fa-heart"></i>';
-      showToast('Added to favorites', 'success');
+    let listings = [];
+    try {
+      listings = await apiGetListings();
+    } catch (e) {
+      console.warn("API failed, falling back to mock listings", e);
+      listings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
     }
+
+    const favListings = listings.filter(l => favIds.includes(l._id));
+    currentListings = favListings;
+
+    grid.innerHTML = favListings.map(listing => `
+      <div class="listing-card" onclick="openDetail('${listing._id}')" style="cursor:pointer;">
+        <div class="listing-image">
+          <img src="${listing.image}" onerror="this.src='noImage.png'"/>
+          <button class="heart-btn liked" onclick="event.stopPropagation(); removeFav('${listing._id}')">
+            <i class="fas fa-heart"></i>
+          </button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
+          <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 8px;">${listing.name}</h3>
+          <p style="font-size:14px;color:var(--gray-500);margin:0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
+          <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--gray-100);">
+            <span style="font-size:18px;font-weight:800;color:var(--gray-900);">₱${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span>
+          </div>
+        </div>
+      </div>`).join('');
   }
 
-  // ─── Detail Modal & Booking ───
+  function removeFav(id) {
+    const userId = getUser()._id;
+    let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+    favs = favs.filter(f => f !== id);
+    localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
+    showToast('Removed from favorites', 'success');
+    loadFavorites(); // re-render
+  }
   function openDetail(id) {
     selectedListing = currentListings.find(l => l._id === id);
     if (!selectedListing) return;
@@ -236,7 +169,7 @@
     document.getElementById('detail-desc').textContent = selectedListing.description;
     document.getElementById('detail-price').textContent = '₱' + selectedListing.price;
     
-    // Reset booking inputs
+    // Reset layout fields
     document.getElementById('book-start').value = '';
     document.getElementById('book-end').value = '';
     document.getElementById('booking-summary').style.display = 'none';
@@ -291,13 +224,11 @@
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
     try {
-      // Try real API first
       await apiCreateBooking({ listingId: selectedListing._id, startDate, endDate });
       showToast('Booking request sent!', 'success');
       closeDetailModal();
     } catch (e) {
-      console.warn("API failed, using mock booking", e);
-      // Fallback
+      console.warn("API failed, using mock booking fallback", e);
       if (e.message.includes("Conflicting schedule")) {
         showToast("Dates not available", "error");
       } else {
@@ -310,6 +241,11 @@
         if (conflict) {
           showToast('Dates not available', 'error');
         } else {
+          const d1 = new Date(startDate);
+          const d2 = new Date(endDate);
+          const nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+          const totalPrice = nights * selectedListing.price;
+
           bookings.push({
             _id: 'book_' + Date.now(),
             listingId: selectedListing._id,
@@ -330,8 +266,7 @@
     }
   }
 
-  // Load immediately
-  loadListings();
+  loadFavorites();
 </script>
 
 </body>

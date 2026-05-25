@@ -31,14 +31,11 @@ const bookingSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    totalPrice: { 
+      type: Number, 
+      required: true },
   },
   { timestamps: true }
 );
-
-// TODO: Add a pre-save or pre-validate hook (or do this in the route) to check
-// for overlapping "approved" bookings on the same listing before saving.
-// Overlap condition:
-//   existing.startDate < newBooking.endDate &&
-//   existing.endDate > newBooking.startDate
 
 module.exports = mongoose.model("Booking", bookingSchema);

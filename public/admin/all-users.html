@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Users | Admin StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">All Users</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Manage users registered on the platform</p>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+      </tr>
+    </thead>
+    <tbody id="admin-users-tbody">
+      <tr><td colspan="5" style="text-align:center;padding:40px;">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  requireAuth('admin');
+  renderHeader('all-users');
+
+  async function loadUsers() {
+    const tbody = document.getElementById('admin-users-tbody');
+    let users = [];
+    
+    try {
+      users = await apiGetAllUsers();
+      
+      if (users.length === 0) {
+        users = [
+          { _id: 'u1', name: 'Demo Guest', email: 'guest@stayez.ph', role: 'guest' },
+          { _id: 'u2', name: 'Demo Host', email: 'host@stayez.ph', role: 'host' },
+          { _id: 'u3', name: 'Demo Admin', email: 'admin@stayez.ph', role: 'admin' }
+        ];
+      }
+    } catch (e) {
+      console.warn("Failed to load users from localStorage", e);
+    }
+
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No users found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => {
+      let roleBadge = '';
+      if (u.role === 'admin') roleBadge = '<span class="badge" style="background:#EDE9FE;color:#5B21B6;">Admin</span>';
+      else if (u.role === 'host') roleBadge = '<span class="badge" style="background:#D1FAE5;color:#065F46;">Host</span>';
+      else roleBadge = '<span class="badge" style="background:#DBEAFE;color:#1D4ED8;">Guest</span>';
+
+      return `
+        <tr>
+          <td><span style="font-family:monospace;color:var(--gray-500);">${u._id}</span></td>
+          <td><b>${u.name}</b></td>
+          <td>${u.email}</td>
+          <td>${roleBadge}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  loadUsers();
+</script>
+
+</body>
+</html>

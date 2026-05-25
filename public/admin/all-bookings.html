@@ -1,59 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayEZ — Admin: All Bookings</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Bookings | Admin StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
-<body>
-  <header class="navbar">
-    <a class="brand" href="/admin/manage-listings.html">🏠 StayEZ Admin</a>
-    <nav>
-      <a href="/admin/manage-listings.html">Listings</a>
-      <a href="/admin/all-bookings.html">All Bookings</a>
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+<body class="bg-gray-50">
 
-  <main class="container">
-    <h1>All Bookings</h1>
-    <div id="bookings-container"><p>Loading...</p></div>
-  </main>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
 
-  <script src="/js/api.js"></script>
-  <script>
-    requireAuth("admin");
-    document.getElementById("logout-btn").addEventListener("click", logout);
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">All Bookings</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Monitor all reservation activity</p>
+  </div>
 
-    async function loadBookings() {
-      try {
-        // TODO: GET /api/bookings — admin only, returns all bookings
-        const bookings = await apiFetch("/bookings");
-        renderBookings(bookings);
-      } catch (err) {
-        document.getElementById("bookings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Booking ID</th>
+        <th>Listing</th>
+        <th>Guest</th>
+        <th>Dates</th>
+        <th>Total</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="admin-bookings-tbody">
+      <tr><td colspan="5" style="text-align:center;padding:40px;">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  requireAuth('admin');
+  renderHeader('all-bookings');
+
+  async function loadBookings() {
+    let bookings = [];
+    let listings = [];
+
+    try {
+      bookings = await apiGetAllBookings();
+      // Only need listings if API doesn't populate it deeply, but we'll fetch just in case
+      if (bookings.length > 0 && typeof bookings[0].listingId === 'string') {
+        listings = await apiGetListings();
       }
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+      listings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
     }
 
-    function renderBookings(bookings) {
-      const container = document.getElementById("bookings-container");
-      if (!bookings.length) { container.innerHTML = "<p>No bookings.</p>"; return; }
-      // TODO: Render full bookings table with guest, listing, dates, status
-      container.innerHTML = `<table>
-        <thead><tr><th>Guest</th><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr></thead>
-        <tbody>
-          ${bookings.map(b => `<tr>
-            <td>${b.guestId?.name ?? "—"}</td>
-            <td>${b.listingId?.name ?? "—"}</td>
-            <td>${new Date(b.startDate).toLocaleDateString()}</td>
-            <td>${new Date(b.endDate).toLocaleDateString()}</td>
-            <td><span class="badge badge-${b.status}">${b.status}</span></td>
-          </tr>`).join("")}
-        </tbody></table>`;
+    const tbody = document.getElementById('admin-bookings-tbody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No bookings found.</td></tr>';
+      return;
     }
 
-    loadBookings();
-  </script>
+    // Sort newest first
+    bookings.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+
+    tbody.innerHTML = bookings.map(b => {
+      let lName = b.listingId?.name;
+      if (!lName) {
+        const found = listings.find(l => String(l._id) === String(b.listingId));
+        lName = found ? found.name : 'Unknown Listing';
+      }
+
+      const gName = b.guestId?.name || b.guestName || 'Unknown Guest';
+      
+      let badge = '';
+      if (b.status === 'pending') badge = '<span class="badge badge-pending">Pending</span>';
+      else if (b.status === 'approved') badge = '<span class="badge badge-approved">Approved</span>';
+      else badge = '<span class="badge badge-rejected">Rejected</span>';
+
+      return `
+        <tr>
+          <td><span style="font-family:monospace;color:var(--gray-500);">${b._id}</span></td>
+          <td><b>${lName}</b></td>
+          <td>${gName}</td>
+          <td>${new Date(b.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} 
+          to 
+          ${new Date(b.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          </td>
+          <td>
+            <p style="font-weight:600;margin:0;color:var(--gray-900);">
+              ₱${b.totalPrice ? Number(b.totalPrice).toLocaleString() : '0'}
+            </p>
+          </td>
+          <td>${badge}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  loadBookings();
+</script>
+
 </body>
 </html>

@@ -1,7 +1,8 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
 const Booking = require("../models/Booking");
-const Listing = require("../models/Listing");
+const Listing = require("../models/Listing"); 
 const { protect, authorize } = require("../middleware/auth");
 
 /**
@@ -11,12 +12,28 @@ const { protect, authorize } = require("../middleware/auth");
  */
 router.get("/my", protect, authorize("guest"), async (req, res) => {
   try {
-    // TODO: Find bookings where guestId === req.user._id
-    // TODO: Populate listingId (name, location, type, price)
-    // TODO: For each booking, include contactNumber ONLY if status === "approved"
-    //       (strip it otherwise before sending the response)
+    const guestId = req.user._id;
+    const myBookings = await Booking.find({ guestId: guestId })
+        .populate("listingId")
+        .lean();
 
-    res.status(200).json({ message: "TODO: return guest bookings" });
+    const finalBookings = [];
+
+    for (const match of myBookings) {
+
+      if (match.listingId) {
+        match.listingId = { ...match.listingId };
+      }
+
+      // Strip the contact number if the booking isn't approved yet
+      if (match.status !== "approved" && match.listingId) {
+        delete match.listingId.contactNumber;
+      }
+
+      finalBookings.push(match);
+    }
+
+    res.status(200).json(finalBookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -29,11 +46,15 @@ router.get("/my", protect, authorize("guest"), async (req, res) => {
  */
 router.get("/host", protect, authorize("host"), async (req, res) => {
   try {
-    // TODO: Find all listings where hostId === req.user._id
-    // TODO: Find all bookings where listingId is in that set
-    // TODO: Populate guestId (name, email) and listingId (name)
+    const hostListings = await Listing.find({ hostId: req.user._id }).lean();
+    const listingIds = hostListings.map(listing => listing._id);
 
-    res.status(200).json({ message: "TODO: return host booking requests" });
+    const hostBookings = await Booking.find({ listingId: { $in: listingIds } })
+        .populate("guestId", "name email")
+        .populate("listingId", "name")
+        .lean();
+
+    res.status(200).json(hostBookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -46,9 +67,12 @@ router.get("/host", protect, authorize("host"), async (req, res) => {
  */
 router.get("/", protect, authorize("admin"), async (req, res) => {
   try {
-    // TODO: Return all bookings, populate listing and guest info
+    const bookings = await Booking.find()
+      .populate("guestId", "name email")
+      .populate("listingId", "name location price hostId")
+      .lean();
 
-    res.status(200).json({ message: "TODO: return all bookings" });
+    res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -61,19 +85,49 @@ router.get("/", protect, authorize("admin"), async (req, res) => {
  */
 router.post("/", protect, authorize("guest"), async (req, res) => {
   try {
-    const { listingId, startDate, endDate } = req.body;
+    const { listingId, startDate, endDate, totalPrice } = req.body;
+    const guestId = req.user._id;
 
-    // TODO: Validate that startDate < endDate
-    // TODO: Check for overlapping APPROVED bookings on the same listing:
-    //   Find existing bookings where:
-    //     listingId === listingId
-    //     status    === "approved"
-    //     startDate <  new endDate   (existing starts before new booking ends)
-    //     endDate   >  new startDate (existing ends after new booking starts)
-    //   If any found → return 409 Conflict
-    // TODO: Create booking with guestId = req.user._id, status = "pending"
+    if (!mongoose.Types.ObjectId.isValid(listingId)) {
+      return res.status(400).json({ 
+        message: "Invalid database ID format. Mock data detected." 
+      });
+    }
 
-    res.status(201).json({ message: "TODO: create booking" });
+    // If it IS a valid MongoDB ID structure, proceed with the database checks safely:
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ message: "Listing not found" });
+    }
+
+    // we only need one to trigger a conflict
+    const sameListing = await Booking.findOne({
+      listingId: listingId,
+      status: "approved",
+      startDate: { $lt: endDate },
+      endDate: { $gt: startDate }
+    })
+
+    if(sameListing) {
+      return res.status(409).json({ message: "Conflicting schedule with another existing booking"})
+    }
+    const d1 = new Date(startDate);
+    const d2 = new Date(endDate);
+
+    const totalNights = Math.round((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+    const nightsStayed = totalNights > 0 ? totalNights : 1;
+    const calculatedTotalPrice = (listing.price || 0) * nightsStayed;
+
+    const newBooking = await Booking.create({
+      listingId: listingId,
+      guestId: guestId,
+      startDate: startDate,
+      endDate: endDate,
+      status: "pending",
+      totalPrice: calculatedTotalPrice,
+    })
+
+    res.status(201).json(newBooking);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -84,17 +138,39 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
  * @desc    Approve or reject a booking (host only)
  * @access  Private - Host
  */
-router.put("/:id/status", protect, authorize("host"), async (req, res) => {
+router.put("/:id/status", protect, authorize("host", "admin"), async (req, res) => {
   try {
     const { status } = req.body; // expected: "approved" or "rejected"
+    const id = req.params.id;
+    const currentBooking = await Booking.findById(id).populate("listingId");
+    if (!currentBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
 
-    // TODO: Find booking by req.params.id
-    // TODO: Ensure the booking's listing belongs to req.user (host ownership check)
-    // TODO: Validate status is "approved" or "rejected"
-    // TODO: If approving, re-run overlap check to avoid race conditions
-    // TODO: Update booking.status and save
+    const listing = currentBooking.listingId;
+    const isOwner = currentBooking.listingId.hostId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Permission not permitted" });
+    }
 
-    res.status(200).json({ message: "TODO: update booking status" });
+    if (status === "approved") {
+      const conflict = await Booking.findOne({
+        listingId: currentBooking.listingId._id,
+        status: "approved",
+        _id: {$ne: currentBooking._id}, // Not including
+        startDate: {$lt: currentBooking.endDate},
+        endDate: {$gt: currentBooking.startDate}
+      });
+      if (conflict) {
+        return res.status(409).json({message: "Cannot approve: conflicting schedule exists."});
+      }
+    }
+
+    currentBooking.status = status;
+    await currentBooking.save();
+
+    res.status(200).json({ message: "Successfully updated", booking: currentBooking });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

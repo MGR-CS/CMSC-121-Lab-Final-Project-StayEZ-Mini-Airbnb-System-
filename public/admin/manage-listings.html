@@ -1,69 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayEZ — Admin: Manage Listings</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
-<body>
-  <header class="navbar">
-    <a class="brand" href="/admin/manage-listings.html">🏠 StayEZ Admin</a>
-    <nav>
-      <a href="/admin/manage-listings.html">Listings</a>
-      <a href="/admin/all-bookings.html">All Bookings</a>
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+<body class="bg-gray-50">
 
-  <main class="container">
-    <h1>Manage All Listings</h1>
-    <div id="listings-container"><p>Loading...</p></div>
-  </main>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
 
-  <script src="/js/api.js"></script>
-  <script>
-    requireAuth("admin");
-    document.getElementById("logout-btn").addEventListener("click", logout);
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">Admin Dashboard</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Overview of platform activity</p>
+  </div>
 
-    async function loadListings() {
-      try {
-        // TODO: GET /api/listings — admin can see all listings
-        const listings = await apiFetch("/listings");
-        renderListings(listings);
-      } catch (err) {
-        document.getElementById("listings-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
-      }
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-bottom:40px;">
+    <div class="stat-card" style="cursor:pointer;" onclick="window.location.href='/admin/all-listings.html'">
+      <div class="stat-value" id="dash-total-listings">0</div>
+      <div class="stat-label">Total Listings</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer;" onclick="window.location.href='/admin/all-bookings.html'">
+      <div class="stat-value" id="dash-total-bookings" style="color:var(--success);">0</div>
+      <div class="stat-label">Total Bookings</div>
+    </div>
+    <div class="stat-card" style="cursor:pointer;" onclick="window.location.href='/admin/all-users.html'">
+      <div class="stat-value" id="dash-total-users" style="color:#5B21B6;">0</div>
+      <div class="stat-label">Registered Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="dash-total-revenue" style="color:var(--gray-900);">$0</div>
+      <div class="stat-label">Total Volume</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px;">
+    <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);overflow:hidden;display:flex;flex-direction:column;">
+      <div style="padding:20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:16px;font-weight:700;margin:0;">Recent Bookings</h3>
+        <a href="/admin/all-bookings.html" style="font-size:13px;color:var(--brand);text-decoration:none;font-weight:600;">View All</a>
+      </div>
+      <table class="data-table" style="border-radius:0;border:none;">
+        <tbody id="dash-recent-bookings">
+          <tr><td style="text-align:center;padding:20px;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);overflow:hidden;display:flex;flex-direction:column;">
+      <div style="padding:20px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:16px;font-weight:700;margin:0;">Newest Listings</h3>
+        <a href="/admin/all-listings.html" style="font-size:13px;color:var(--brand);text-decoration:none;font-weight:600;">View All</a>
+      </div>
+      <table class="data-table" style="border-radius:0;border:none;">
+        <tbody id="dash-recent-listings">
+          <tr><td style="text-align:center;padding:20px;">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  requireAuth('admin');
+  renderHeader('dashboard');
+
+  async function loadDashboard() {
+    let listings = [];
+    let bookings = [];
+    let users = [];
+
+    try {
+      listings = await apiGetListings();
+      bookings = await apiGetAllBookings();
+      users = await apiGetAllUsers();
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      listings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+      users = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
     }
 
-    function renderListings(listings) {
-      const container = document.getElementById("listings-container");
-      if (!listings.length) { container.innerHTML = "<p>No listings.</p>"; return; }
-      // TODO: Render listings table with host info and a Delete button for each
-      container.innerHTML = `<table>
-        <thead><tr><th>Name</th><th>Type</th><th>Location</th><th>Price</th><th>Host</th><th>Action</th></tr></thead>
-        <tbody>
-          ${listings.map(l => `<tr>
-            <td>${l.name}</td>
-            <td>${l.type}</td>
-            <td>${l.location}</td>
-            <td>₱${l.price}</td>
-            <td>${l.hostId?.name ?? "—"}</td>
-            <td><button class="btn btn-danger" onclick="deleteListing('${l._id}')">Delete</button></td>
-          </tr>`).join("")}
-        </tbody></table>`;
-    }
+    const volume = bookings.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 
-    async function deleteListing(id) {
-      if (!confirm("Delete this listing?")) return;
-      try {
-        // TODO: DELETE /api/listings/:id
-        await apiFetch(`/listings/${id}`, { method: "DELETE" });
-        loadListings();
-      } catch (err) { alert(err.message); }
-    }
+    document.getElementById('dash-total-listings').textContent = listings.length;
+    document.getElementById('dash-total-bookings').textContent = bookings.length;
+    document.getElementById('dash-total-users').textContent = users.length;
+    document.getElementById('dash-total-revenue').textContent = '₱' + volume.toLocaleString();
 
-    loadListings();
-  </script>
+    // Recent Bookings (top 5)
+    const recentB = [...bookings].reverse().slice(0, 5);
+    document.getElementById('dash-recent-bookings').innerHTML = recentB.length === 0 
+      ? '<tr><td style="text-align:center;color:var(--gray-500);">No bookings yet</td></tr>'
+      : recentB.map(b => {
+          const lName = (b.listingId && b.listingId.name) ? b.listingId.name : listings.find(l => String(l._id) === String(b.listingId._id || b.listingId))?.name || 'Unknown Listing';
+          const badge = b.status === 'approved' ? '<span class="badge badge-approved">Approved</span>' : (b.status === 'rejected' ? '<span class="badge badge-rejected">Rejected</span>' : '<span class="badge badge-pending">Pending</span>');
+          return `<tr><td><b>${lName}</b></td><td>${b.guestName || b.guestId?.name || 'Guest'}</td><td style="text-align:right;">${badge}</td></tr>`;
+        }).join('');
+
+    // Recent Listings (top 5)
+    const recentL = [...listings].reverse().slice(0, 5);
+    document.getElementById('dash-recent-listings').innerHTML = recentL.length === 0
+      ? '<tr><td style="text-align:center;color:var(--gray-500);">No listings yet</td></tr>'
+      : recentL.map(l => `<tr><td><b>${l.name}</b></td><td>${l.type}</td><td style="text-align:right;font-weight:600;">₱${l.price}</td></tr>`).join('');
+  }
+
+  loadDashboard();
+</script>
+
 </body>
 </html>

@@ -1,74 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StayEZ — Booking Requests</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Booking Requests | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
-<body>
-  <header class="navbar">
-    <a class="brand" href="/host/my-listings.html">🏠 StayEZ</a>
-    <nav>
-      <a href="/host/my-listings.html">My Listings</a>
-      <a href="/host/create-listing.html">+ New Listing</a>
-      <a href="/host/booking-requests.html">Booking Requests</a>
-      <a href="#" id="logout-btn">Logout</a>
-    </nav>
-  </header>
+<body class="bg-gray-50">
 
-  <main class="container">
-    <h1>Booking Requests</h1>
-    <div id="requests-container"><p>Loading...</p></div>
-  </main>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
 
-  <script src="/js/api.js"></script>
-  <script>
-    requireAuth("host");
-    document.getElementById("logout-btn").addEventListener("click", logout);
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">Booking Requests</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Manage reservations for your properties</p>
+  </div>
 
-    async function loadRequests() {
-      try {
-        // TODO: GET /api/bookings/host — returns bookings for this host's listings
-        const bookings = await apiFetch("/bookings/host");
-        renderRequests(bookings);
-      } catch (err) {
-        document.getElementById("requests-container").innerHTML = `<p class="msg-error">${err.message}</p>`;
+  <table class="data-table" id="requests-table">
+    <thead>
+      <tr>
+        <th>Guest</th>
+        <th>Property</th>
+        <th>Dates</th>
+        <th>Total</th>
+        <th>Status</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="requests-tbody">
+      <!-- Loading state -->
+      <tr><td colspan="5" style="text-align:center;padding:40px;"><div class="skeleton" style="width:100%;height:40px;margin-bottom:10px;"></div><div class="skeleton" style="width:100%;height:40px;"></div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  requireAuth('host');
+  renderHeader('booking-requests');
+
+  async function loadRequests() {
+    const tbody = document.getElementById('requests-tbody');
+    
+    let bookings = [];
+    let listingsMap = {};
+    
+    try {
+      bookings = await apiGetHostBookings();
+      // Populate listings map from API bookings response
+      bookings.forEach(b => {
+        if (b.listingId) {
+          listingsMap[b.listingId._id || b.listingId] = b.listingId;
+        }
+      });
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      const allBooks = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+      const allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      const myIds = allListings.filter(l => String(l.hostId._id || l.hostId) === String(getUser()._id)).map(l => l._id);
+      
+      bookings = allBooks.filter(b => myIds.includes(b.listingId));
+      allListings.forEach(l => listingsMap[l._id] = l);
+    }
+
+    if (bookings.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center;padding:60px 20px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--gray-50);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+              <i class="fas fa-inbox" style="font-size:20px;color:var(--gray-400);"></i>
+            </div>
+            <p style="font-weight:600;color:var(--gray-900);margin:0 0 4px;">No requests yet</p>
+            <p style="font-size:13px;color:var(--gray-500);margin:0;">When guests book your properties, they'll appear here.</p>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    // Sort pending first, then by start date
+    bookings.sort((a,b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return new Date(a.startDate) - new Date(b.startDate);
+    });
+
+    tbody.innerHTML = bookings.map(booking => {
+      const listing = listingsMap[booking.listingId._id || booking.listingId] || { name: 'Unknown Listing' };
+      const guestName = booking.guestId?.name || booking.guestName || 'Guest';
+      const guestEmail = booking.guestId?.email || '';
+      
+      let statusBadge = '';
+      if (booking.status === 'pending') statusBadge = '<span class="badge badge-pending">Pending</span>';
+      else if (booking.status === 'approved') statusBadge = '<span class="badge badge-approved">Approved</span>';
+      else statusBadge = '<span class="badge badge-rejected">Rejected</span>';
+
+      let actions = '';
+      if (booking.status === 'pending') {
+        actions = `
+          <div style="display:flex;justify-content:flex-end;gap:8px;">
+            <button onclick="updateStatus('${booking._id}', 'approved')" class="btn btn-sm" style="background:#D1FAE5;color:#065F46;"><i class="fas fa-check"></i> Approve</button>
+            <button onclick="updateStatus('${booking._id}', 'rejected')" class="btn btn-sm" style="background:#FEE2E2;color:#991B1B;"><i class="fas fa-times"></i> Reject</button>
+          </div>
+        `;
+      } else {
+        actions = `<div style="text-align:right;color:var(--gray-400);font-size:13px;padding-right:8px;">Resolved</div>`;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;color:var(--brand);"><i class="fas fa-user"></i></div>
+              <div>
+                <p style="font-weight:600;margin:0 0 2px;">${guestName}</p>
+                ${guestEmail ? `<p style="font-size:12px;color:var(--gray-500);margin:0;">${guestEmail}</p>` : ''}
+              </div>
+            </div>
+          </td>
+          <td><p style="font-weight:600;margin:0;">${listing.name}</p></td>
+          <td>
+            <p style="margin:0 0 2px;font-size:13px;"><i class="fas fa-calendar-alt" style="color:var(--brand);margin-right:4px;"></i>${
+              new Date(booking.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+              }</p>
+            <p style="margin:0;font-size:13px;color:var(--gray-500);">to ${new Date(booking.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+          </td>
+
+          <td>
+            <p style="font-weight:600;margin:0;color:var(--gray-900);">
+              ₱${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}
+            </p>
+          </td>
+
+          <td>${statusBadge}</td>
+          <td>${actions}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function updateStatus(id, newStatus) {
+    try {
+      await apiUpdateBookingStatus(id, newStatus);
+      showToast(`Booking ${newStatus}`, 'success');
+    } catch (e) {
+      console.warn("API failed, using mock update", e);
+      if (e.message && e.message.includes("Cannot approve: conflicting schedule exists")) {
+        return showToast("Cannot approve: Dates conflict with an existing booking", "error");
+      }
+      
+      const all = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+      const b = all.find(x => x._id === id);
+      if (b) {
+        if (newStatus === 'approved') {
+          const conflict = all.find(x => x.listingId === b.listingId && x.status === 'approved' && x._id !== id && x.startDate < b.endDate && x.endDate > b.startDate);
+          if (conflict) return showToast("Cannot approve: Dates conflict", "error");
+        }
+        b.status = newStatus;
+        localStorage.setItem('stayez_bookings', JSON.stringify(all));
+        showToast(`Booking ${newStatus} (Mock)`, 'success');
       }
     }
-
-    function renderRequests(bookings) {
-      const container = document.getElementById("requests-container");
-      if (!bookings.length) { container.innerHTML = "<p>No booking requests.</p>"; return; }
-      // TODO: Render a table with guest name, listing, dates, status, and Approve/Reject buttons
-      container.innerHTML = `<table>
-        <thead><tr><th>Guest</th><th>Listing</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          ${bookings.map(b => `<tr>
-            <td>${b.guestId?.name ?? "—"}</td>
-            <td>${b.listingId?.name ?? "—"}</td>
-            <td>${new Date(b.startDate).toLocaleDateString()}</td>
-            <td>${new Date(b.endDate).toLocaleDateString()}</td>
-            <td><span class="badge badge-${b.status}">${b.status}</span></td>
-            <td>
-              ${b.status === "pending" ? `
-                <button class="btn btn-success" onclick="updateStatus('${b._id}','approved')">Approve</button>
-                <button class="btn btn-danger"  onclick="updateStatus('${b._id}','rejected')">Reject</button>
-              ` : "—"}
-            </td>
-          </tr>`).join("")}
-        </tbody></table>`;
-    }
-
-    async function updateStatus(bookingId, status) {
-      try {
-        // TODO: PUT /api/bookings/:id/status with { status }
-        await apiFetch(`/bookings/${bookingId}/status`, { method: "PUT", body: { status } });
-        loadRequests();
-      } catch (err) { alert(err.message); }
-    }
-
     loadRequests();
-  </script>
+  }
+
+  loadRequests();
+</script>
+
 </body>
 </html>

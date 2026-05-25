@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Listing = require("../models/Listing");
+const Booking = require("../models/Booking"); // required for the deleting related boookings
 const { protect, authorize } = require("../middleware/auth");
 
 /**
@@ -15,21 +16,33 @@ router.get("/", async (req, res) => {
     const { search, location, type, sort } = req.query;
     let query = {};
 
-    // TODO: If `search` is provided, filter by name (case-insensitive)
-    // e.g., query.name = { $regex: search, $options: "i" };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } }
+  ];
+    }
 
-    // TODO: If `location` is provided, filter by location (case-insensitive)
+    if(location) {
+      query.location = { $regex: location, $options: "i" };
+    }
 
-    // TODO: If `type` is provided, filter by type (exact or case-insensitive)
+    if(type) {
+      query.type = type;
+    }
 
-    // TODO: Build sort object
-    // price_asc  → { price: 1 }
-    // price_desc → { price: -1 }
+    let sortObj = {};
+    if (sort === "price_asc") {
+      sortObj = { price: 1 };  // Lowest to highest 📈
+    } else if (sort === "price_desc") {
+      sortObj = { price: -1 }; // Highest to lowest 📉
+    }
 
-    // TODO: Execute query with Listing.find(query).sort(sortObj)
-    // TODO: Populate hostId with host name (but NOT contactNumber — that's restricted)
+    const listings = await Listing.find(query)
+        .sort(sortObj)
+        .populate("hostId", "name");
 
-    res.status(200).json({ message: "TODO: return listings" });
+    res.status(200).json(listings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -42,10 +55,16 @@ router.get("/", async (req, res) => {
  */
 router.get("/:id", async (req, res) => {
   try {
-    // TODO: Find listing by req.params.id
-    // TODO: Return 404 if not found
 
-    res.status(200).json({ message: "TODO: return single listing" });
+    const id = req.params.id;
+    const listing = await Listing.findById(id);
+
+    if(!listing) {
+      return res.status(404).json({ message: "Not Found" });
+    }
+
+
+    res.status(200).json(listing);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -58,14 +77,24 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", protect, authorize("host", "admin"), async (req, res) => {
   try {
-    const { name, type, location, price, description, image, contactNumber } =
-      req.body;
+    const { name, type, location, price, description, image, contactNumber } = req.body;
+    const hostId = req.user._id;
+      if(!name || !type || !location || !price || !contactNumber) {
+        return res.status(400).json({ message: "Please enter all required fields" });
+      }
 
-    // TODO: Validate required fields
-    // TODO: Create listing with hostId = req.user._id
-    // TODO: Return the created listing
+      const list = await Listing.create( {
+        name: name,
+        type: type,
+        location: location,
+        price: price,
+        description: description,
+        image: image,
+        hostId: hostId,
+        contactNumber: contactNumber,
+      })
 
-    res.status(201).json({ message: "TODO: create listing" });
+    res.status(201).json(list);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -78,11 +107,34 @@ router.post("/", protect, authorize("host", "admin"), async (req, res) => {
  */
 router.put("/:id", protect, authorize("host", "admin"), async (req, res) => {
   try {
+
+    const { name, type, location, price, description, image, contactNumber } = req.body;
+    const id = req.params.id;
+    const isAdmin = (req.user.role === "admin");
+
+    const listing = await Listing.findById(id);
+
+    if(!listing) {
+      return res.status(404).json({ message: "Not Found" });
+    }
+
+    const isOwner = req.user._id.toString() === listing.hostId.toString();
+
+    if(!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "Action not permitted" });
+    }
+
     // TODO: Find listing by ID
     // TODO: Check that req.user._id === listing.hostId OR req.user.role === "admin"
     // TODO: Update and return the listing
 
-    res.status(200).json({ message: "TODO: update listing" });
+    const updatedListing = await Listing.findByIdAndUpdate(
+        id,
+        { $set: req.body }, // Using req.body directly is cleaner
+        { new: true }       // This option returns the updated document instead of the old one
+    );
+
+    res.status(200).json({ message: "Successfully Updated", listing: updatedListing }); //  Correct
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -99,12 +151,26 @@ router.delete(
   authorize("host", "admin"),
   async (req, res) => {
     try {
-      // TODO: Find listing by ID
-      // TODO: Check ownership (host) or admin role
-      // TODO: Delete listing
-      // TODO: Also delete related bookings? (optional, discuss with team)
+      const id = req.params.id;
+      const listing = await Listing.findById(id)
+      const isAdmin = req.user.role === "admin";
 
-      res.status(200).json({ message: "TODO: delete listing" });
+      if(!listing) {
+        return res.status(404).json({message: "No list found"});
+      }
+      const isOwner = req.user._id.toString() === listing.hostId.toString();
+
+      if(!isOwner && !isAdmin) {
+        return  res.status(403).json({message: "Action not permitted"})
+      }
+
+      await Booking.deleteMany({listingId: id});
+      await Listing.deleteOne({ _id: id })
+
+      // TODO: Also delete related bookings? (optional, discuss with team)
+        // Chris: Implementation is done. Haven't discussed with team yet so
+
+      res.status(200).json({ message: "Listing and related booking deleted" });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Property Reviews | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">Property Reviews</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">See what guests are saying about your properties</p>
+  </div>
+
+  <div id="ratings-container" style="max-width:800px;">
+    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<script>
+  requireAuth('host');
+  renderHeader('ratings');
+
+  let hostListings = [];
+  let allRatings = [];
+
+  async function loadData() {
+    const container = document.getElementById('ratings-container');
+    container.innerHTML = '<div class="card skeleton" style="height:200px;margin-bottom:16px;border-radius:16px;"></div>'.repeat(2);
+
+    try {
+      // 1. Fetch data in parallel from real API routes
+      const [listings, ratings] = await Promise.all([
+        apiGetMyListings(),
+        apiGetMyRatingsHost()
+      ]);
+
+      hostListings = listings;
+      allRatings = ratings;
+
+    } catch (e) {
+      console.warn("API connection failed, using local fallback arrays", e);
+      const allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+      hostListings = allListings.filter(l => String(l.hostId?._id || l.hostId) === String(getUser()._id));
+      allRatings = JSON.parse(localStorage.getItem('stayez_ratings') || '[]');
+    }
+
+    renderRatings();
+  }
+
+  function renderRatings() {
+    const container = document.getElementById('ratings-container');
+
+    // Convert listing IDs to clean primitive string arrays for foolproof matching
+    const myListingIds = hostListings.map(l => String(l._id));
+
+    // Filter ratings safely extracting the string ID from the populated object
+    const myRatings = allRatings.filter(r => {
+      const ratingListingId = r.listingId && typeof r.listingId === 'object' ? r.listingId._id : r.listingId;
+      return myListingIds.includes(String(ratingListingId));
+    });
+
+    if (myRatings.length === 0) {
+      container.innerHTML = `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:48px 24px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#F0FDF4;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-comment-alt" style="font-size:26px;color:#10B981;"></i>
+          </div>
+          <p style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">No reviews yet</p>
+          <p style="font-size:14px;color:var(--gray-500);">Guest reviews will appear here once they rate their stays.</p>
+        </div>`;
+      return;
+    }
+
+    const byListing = {};
+    myRatings.forEach(r => {
+      const listingIdStr = r.listingId && typeof r.listingId === 'object' ? String(r.listingId._id) : String(r.listingId);
+      const listingNameStr = r.listingId && typeof r.listingId === 'object' ? r.listingId.name : (r.listingName || "Property Stay");
+
+      if (!byListing[listingIdStr]) {
+        byListing[listingIdStr] = { name: listingNameStr, reviews: [] };
+      }
+      byListing[listingIdStr].reviews.push(r);
+    });
+
+    container.innerHTML = Object.entries(byListing).map(([lid, data]) => {
+      const avg = (data.reviews.reduce((s, r) => s + r.stars, 0) / data.reviews.length).toFixed(1);
+      return `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);margin-bottom:20px;overflow:hidden;">
+          <div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 4px;">${data.name}</h3>
+              <p style="font-size:12px;color:var(--gray-500);margin:0;">${data.reviews.length} review${data.reviews.length !== 1 ? 's' : ''}</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;background:#FEF9C3;border-radius:20px;padding:8px 16px;">
+              ${renderStars(Math.round(avg), 15)}
+              <span style="font-size:18px;font-weight:800;color:#D97706;margin-left:6px;">${avg}</span>
+            </div>
+          </div>
+          <div style="padding:0 24px 8px;">
+            ${data.reviews.map(r => {
+        // Extract the guest name from populated guestId subdocument
+        const guestNameDisplay = r.guestId && typeof r.guestId === 'object' ? r.guestId.name : (r.guestName || "Anonymous Guest");
+
+        return `
+                <div style="padding:16px 0;border-bottom:1px solid var(--gray-100);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:32px;height:32px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-user" style="color:var(--brand);font-size:13px;"></i>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:var(--gray-800);">${guestNameDisplay}</span>
+                    </div>
+                    <div>${renderStars(r.stars, 13)}</div>
+                  </div>
+                  ${r.comment ? `<p style="font-size:13px;color:var(--gray-600);margin:0;padding-left:40px;font-style:italic;">"${r.comment}"</p>` : '<p style="font-size:12px;color:var(--gray-400);margin:0;padding-left:40px;">No written review</p>'}
+                  <p style="font-size:11px;color:var(--gray-400);margin:6px 0 0;padding-left:40px;">${new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                </div>
+              `;
+      }).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  loadData();
+</script>
+
+</body>
+</html>

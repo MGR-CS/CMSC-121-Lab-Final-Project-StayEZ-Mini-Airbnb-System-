@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Reviews | StayEZ</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+
+<div class="page-content container-lg">
+  <div style="margin-bottom:32px;">
+    <h1 style="font-size:32px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;">My Reviews</h1>
+    <p style="color:var(--gray-500);font-size:15px;margin:0;">Rate your past stays and manage your feedback</p>
+  </div>
+
+  <div id="ratings-container" style="max-width:800px;">
+    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<!-- Rating Modal -->
+<div id="rate-modal" class="modal-overlay" onclick="if(event.target===this) closeRateModal()">
+  <div class="modal-content" style="width:100%;max-width:400px;padding:24px;text-align:center;">
+    <h2 id="rate-modal-title" style="font-size:20px;font-weight:800;margin:0 0 8px;">Rate Stay</h2>
+    <p style="color:var(--gray-500);font-size:14px;margin-bottom:24px;">How was your experience?</p>
+    
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;" id="star-selector">
+      <button class="star-btn" data-val="1" onclick="selectStar(1)" style="background:none;border:none;font-size:32px;color:var(--gray-300);cursor:pointer;transition:all 0.2s;"><i class="fas fa-star"></i></button>
+      <button class="star-btn" data-val="2" onclick="selectStar(2)" style="background:none;border:none;font-size:32px;color:var(--gray-300);cursor:pointer;transition:all 0.2s;"><i class="fas fa-star"></i></button>
+      <button class="star-btn" data-val="3" onclick="selectStar(3)" style="background:none;border:none;font-size:32px;color:var(--gray-300);cursor:pointer;transition:all 0.2s;"><i class="fas fa-star"></i></button>
+      <button class="star-btn" data-val="4" onclick="selectStar(4)" style="background:none;border:none;font-size:32px;color:var(--gray-300);cursor:pointer;transition:all 0.2s;"><i class="fas fa-star"></i></button>
+      <button class="star-btn" data-val="5" onclick="selectStar(5)" style="background:none;border:none;font-size:32px;color:var(--gray-300);cursor:pointer;transition:all 0.2s;"><i class="fas fa-star"></i></button>
+    </div>
+    <p id="star-label" style="font-size:14px;font-weight:700;color:var(--warning);margin-bottom:24px;height:20px;"></p>
+    
+    <textarea id="rate-comment" placeholder="Tell others about your stay (optional)" style="height:100px;margin-bottom:16px;resize:none;"></textarea>
+    
+    <div style="display:flex;gap:12px;">
+      <button onclick="closeRateModal()" class="btn btn-secondary" style="flex:1;">Cancel</button>
+      <button onclick="submitRating()" class="btn btn-primary" style="flex:1;">Submit Review</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  requireAuth('guest');
+  renderHeader('ratings');
+
+  // TODO: Backend integration — wait for /api/ratings endpoints
+  // Fallbacks:
+  let guestBookings = [];
+  let allListings = [];
+  let allRatings = [];
+
+  async function loadData() {
+    const container = document.getElementById('ratings-container');
+    container.innerHTML = '<div class="card skeleton" style="height:120px;margin-bottom:16px;border-radius:16px;"></div>'.repeat(3);
+
+    try {
+      guestBookings = await apiGetMyBookings();
+      allListings = await apiGetListings();
+    } catch (e) {
+      console.warn("API failed, falling back to mock data", e);
+      guestBookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]').filter(b => b.guestId === getUser()._id);
+      allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
+    }
+
+    allRatings = await apiGetMyRatings();
+    renderRatings();
+  }
+
+  function renderRatings() {
+    const container = document.getElementById('ratings-container');
+    const validBookings = guestBookings.filter(b => b.status === 'approved');
+
+    if (validBookings.length === 0) {
+      container.innerHTML = `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:48px 24px;text-align:center;">
+          <div style="width:64px;height:64px;border-radius:50%;background:#FEF9C3;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <i class="fas fa-star" style="font-size:26px;color:#D97706;"></i>
+          </div>
+          <p style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">No completed stays yet</p>
+          <p style="font-size:14px;color:var(--gray-500);margin-bottom:20px;">Once a host approves your booking, you can leave a review here.</p>
+          <button class="btn btn-primary btn-sm" onclick="window.location.href='/guest/browse.html'"><i class="fas fa-search"></i> Browse Properties</button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = validBookings.map(booking => {
+      const listing = allListings.find(l => String(l._id) === String(booking.listingId._id || booking.listingId));
+      if (!listing) return '';
+      const myRating = allRatings.find(r => r.bookingId === booking._id);
+      const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000*60*60*24));
+
+      return `
+        <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);padding:24px;margin-bottom:16px;display:flex;gap:20px;align-items:flex-start;">
+          <img src="${listing.image}" style="width:88px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0;" onerror="this.src='noImage.png'"/>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+              <div>
+                <h3 style="font-size:15px;font-weight:700;color:var(--gray-900);margin:0 0 4px;">${listing.name}</h3>
+                <p style="font-size:12px;color:var(--gray-500);margin:0;"><i class="fas fa-calendar-alt" style="margin-right:4px;color:var(--brand);"></i>
+                  ${new Date(booking.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} 
+                  → 
+                  ${new Date(booking.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} &nbsp;·&nbsp; ${nights} night${nights!==1?'s':''}</p>
+              </div>
+              ${myRating
+                ? `<div style="text-align:right;flex-shrink:0;">
+                    <div style="margin-bottom:4px;">${renderStars(myRating.stars, 15)}</div>
+                    ${myRating.comment ? `<p style="font-size:12px;color:var(--gray-600);max-width:200px;text-align:right;font-style:italic;">"${myRating.comment}"</p>` : ''}
+                    <button onclick="openRateModal('${booking._id}')" style="font-size:12px;color:var(--brand);background:none;border:none;cursor:pointer;font-weight:600;padding:4px 0;"><i class="fas fa-edit" style="margin-right:4px;"></i>Edit Review</button>
+                  </div>`
+                : `<button onclick="openRateModal('${booking._id}')" class="btn btn-primary btn-sm" style="flex-shrink:0;"><i class="fas fa-star"></i> Rate Stay</button>`
+              }
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Modal logic
+  let ratingBookingId = null;
+  let selectedStarVal = 0;
+  const STAR_LABELS = { 1: 'Terrible', 2: 'Poor', 3: 'Okay', 4: 'Good', 5: 'Excellent!' };
+
+  function selectStar(val) {
+    selectedStarVal = val;
+    document.querySelectorAll('.star-btn').forEach(b => {
+      const bVal = parseInt(b.dataset.val);
+      b.style.color = bVal <= val ? '#F59E0B' : 'var(--gray-300)';
+      b.style.transform = bVal <= val ? 'scale(1.1)' : 'scale(1)';
+    });
+    document.getElementById('star-label').textContent = STAR_LABELS[val] || '';
+  }
+
+  function openRateModal(bookingId) {
+    ratingBookingId = bookingId;
+    selectedStarVal = 0;
+    
+    const booking = guestBookings.find(b => b._id === bookingId);
+    const listing = allListings.find(l => String(l._id) === String(booking.listingId._id || booking.listingId));
+    
+    document.getElementById('rate-modal-title').textContent = listing ? listing.name : 'Property';
+    document.getElementById('rate-comment').value = '';
+    document.getElementById('star-label').textContent = '';
+    document.querySelectorAll('.star-btn').forEach(b => { b.style.color = 'var(--gray-300)'; b.style.transform = 'scale(1)'; });
+    
+    const existing = allRatings.find(r => r.bookingId === bookingId);
+    if (existing) {
+      selectStar(existing.stars);
+      document.getElementById('rate-comment').value = existing.comment || '';
+    }
+    
+    document.getElementById('rate-modal').classList.add('open');
+  }
+
+  function closeRateModal() {
+    document.getElementById('rate-modal').classList.remove('open');
+    ratingBookingId = null; 
+    selectedStarVal = 0;
+  }
+
+  async function submitRating() {
+    if (!selectedStarVal) return showToast('Please select a star rating', 'error');
+
+    const comment = document.getElementById('rate-comment').value.trim();
+
+    try {
+      const response = await apiSubmitRating({
+        bookingId: ratingBookingId,
+        stars: selectedStarVal,
+        comment: comment
+      });
+
+      showToast('⭐ Rating saved securely!', 'success');
+
+      closeRateModal();
+      await loadData();
+
+    } catch (error) {
+      console.error("Failed to sync review with database:", error);
+      showToast(error.message || 'Failed to save review', 'error');
+    }
+  }
+
+  loadData();
+</script>
+
+</body>
+</html>
