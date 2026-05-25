@@ -37,21 +37,36 @@
     container.innerHTML = '<div class="card skeleton" style="height:200px;margin-bottom:16px;border-radius:16px;"></div>'.repeat(2);
 
     try {
-      hostListings = await apiGetMyListings();
+      // 1. Fetch data in parallel from real API routes
+      const [listings, ratings] = await Promise.all([
+        apiGetMyListings(),
+        apiGetMyRatingsHost()
+      ]);
+
+      hostListings = listings;
+      allRatings = ratings;
+
     } catch (e) {
-      console.warn("API failed, falling back to mock data", e);
+      console.warn("API connection failed, using local fallback arrays", e);
       const allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
-      hostListings = allListings.filter(l => String(l.hostId._id || l.hostId) === String(getUser()._id));
+      hostListings = allListings.filter(l => String(l.hostId?._id || l.hostId) === String(getUser()._id));
+      allRatings = JSON.parse(localStorage.getItem('stayez_ratings') || '[]');
     }
 
-    allRatings = JSON.parse(localStorage.getItem('stayez_ratings') || '[]');
     renderRatings();
   }
 
   function renderRatings() {
     const container = document.getElementById('ratings-container');
-    const myListingIds = hostListings.map(l => l._id);
-    const myRatings = allRatings.filter(r => myListingIds.includes(r.listingId));
+
+    // Convert listing IDs to clean primitive string arrays for foolproof matching
+    const myListingIds = hostListings.map(l => String(l._id));
+
+    // Filter ratings safely extracting the string ID from the populated object
+    const myRatings = allRatings.filter(r => {
+      const ratingListingId = r.listingId && typeof r.listingId === 'object' ? r.listingId._id : r.listingId;
+      return myListingIds.includes(String(ratingListingId));
+    });
 
     if (myRatings.length === 0) {
       container.innerHTML = `
@@ -65,21 +80,25 @@
       return;
     }
 
-    // Group by listing
     const byListing = {};
     myRatings.forEach(r => {
-      if (!byListing[r.listingId]) byListing[r.listingId] = { name: r.listingName, reviews: [] };
-      byListing[r.listingId].reviews.push(r);
+      const listingIdStr = r.listingId && typeof r.listingId === 'object' ? String(r.listingId._id) : String(r.listingId);
+      const listingNameStr = r.listingId && typeof r.listingId === 'object' ? r.listingId.name : (r.listingName || "Property Stay");
+
+      if (!byListing[listingIdStr]) {
+        byListing[listingIdStr] = { name: listingNameStr, reviews: [] };
+      }
+      byListing[listingIdStr].reviews.push(r);
     });
 
     container.innerHTML = Object.entries(byListing).map(([lid, data]) => {
-      const avg = (data.reviews.reduce((s,r) => s + r.stars, 0) / data.reviews.length).toFixed(1);
+      const avg = (data.reviews.reduce((s, r) => s + r.stars, 0) / data.reviews.length).toFixed(1);
       return `
         <div style="background:white;border-radius:16px;border:1px solid var(--gray-100);margin-bottom:20px;overflow:hidden;">
           <div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
             <div>
               <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 4px;">${data.name}</h3>
-              <p style="font-size:12px;color:var(--gray-500);margin:0;">${data.reviews.length} review${data.reviews.length!==1?'s':''}</p>
+              <p style="font-size:12px;color:var(--gray-500);margin:0;">${data.reviews.length} review${data.reviews.length !== 1 ? 's' : ''}</p>
             </div>
             <div style="display:flex;align-items:center;gap:8px;background:#FEF9C3;border-radius:20px;padding:8px 16px;">
               ${renderStars(Math.round(avg), 15)}
@@ -87,21 +106,26 @@
             </div>
           </div>
           <div style="padding:0 24px 8px;">
-            ${data.reviews.map(r => `
-              <div style="padding:16px 0;border-bottom:1px solid var(--gray-100);">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                  <div style="display:flex;align-items:center;gap:8px;">
-                    <div style="width:32px;height:32px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;">
-                      <i class="fas fa-user" style="color:var(--brand);font-size:13px;"></i>
+            ${data.reviews.map(r => {
+        // Extract the guest name from populated guestId subdocument
+        const guestNameDisplay = r.guestId && typeof r.guestId === 'object' ? r.guestId.name : (r.guestName || "Anonymous Guest");
+
+        return `
+                <div style="padding:16px 0;border-bottom:1px solid var(--gray-100);">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div style="width:32px;height:32px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-user" style="color:var(--brand);font-size:13px;"></i>
+                      </div>
+                      <span style="font-size:13px;font-weight:600;color:var(--gray-800);">${guestNameDisplay}</span>
                     </div>
-                    <span style="font-size:13px;font-weight:600;color:var(--gray-800);">${r.guestName}</span>
+                    <div>${renderStars(r.stars, 13)}</div>
                   </div>
-                  <div>${renderStars(r.stars, 13)}</div>
+                  ${r.comment ? `<p style="font-size:13px;color:var(--gray-600);margin:0;padding-left:40px;font-style:italic;">"${r.comment}"</p>` : '<p style="font-size:12px;color:var(--gray-400);margin:0;padding-left:40px;">No written review</p>'}
+                  <p style="font-size:11px;color:var(--gray-400);margin:6px 0 0;padding-left:40px;">${new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                 </div>
-                ${r.comment ? `<p style="font-size:13px;color:var(--gray-600);margin:0;padding-left:40px;font-style:italic;">"${r.comment}"</p>` : '<p style="font-size:12px;color:var(--gray-400);margin:0;padding-left:40px;">No written review</p>'}
-                <p style="font-size:11px;color:var(--gray-400);margin:6px 0 0;padding-left:40px;">${new Date(r.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})}</p>
-              </div>
-            `).join('')}
+              `;
+      }).join('')}
           </div>
         </div>`;
     }).join('');

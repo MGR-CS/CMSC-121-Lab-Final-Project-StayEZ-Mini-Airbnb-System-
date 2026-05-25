@@ -70,7 +70,7 @@
       allListings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
     }
 
-    allRatings = JSON.parse(localStorage.getItem('stayez_ratings') || '[]');
+    allRatings = await apiGetMyRatings();
     renderRatings();
   }
 
@@ -162,38 +162,27 @@
     selectedStarVal = 0;
   }
 
-  function submitRating() {
+  async function submitRating() {
     if (!selectedStarVal) return showToast('Please select a star rating', 'error');
 
-    const booking = guestBookings.find(b => b._id === ratingBookingId);
-    if (!booking) return;
-    const listing = allListings.find(l => String(l._id) === String(booking.listingId._id || booking.listingId));
     const comment = document.getElementById('rate-comment').value.trim();
 
-    const existing = allRatings.find(r => r.bookingId === ratingBookingId);
-    if (existing) {
-      existing.stars = selectedStarVal;
-      existing.comment = comment;
-      existing.updatedAt = new Date().toISOString();
-    } else {
-      allRatings.push({
-        _id: 'rating_' + Date.now(),
+    try {
+      const response = await apiSubmitRating({
         bookingId: ratingBookingId,
-        listingId: listing._id,
-        listingName: listing.name,
-        guestId: booking.guestId._id || booking.guestId,
-        guestName: getUser().name,
-        hostId: listing.hostId._id || listing.hostId,
         stars: selectedStarVal,
-        comment,
-        createdAt: new Date().toISOString()
+        comment: comment
       });
+
+      showToast('⭐ Rating saved securely!', 'success');
+
+      closeRateModal();
+      await loadData();
+
+    } catch (error) {
+      console.error("Failed to sync review with database:", error);
+      showToast(error.message || 'Failed to save review', 'error');
     }
-    
-    localStorage.setItem('stayez_ratings', JSON.stringify(allRatings));
-    closeRateModal();
-    renderRatings();
-    showToast('⭐ Rating submitted! Thank you.', 'success');
   }
 
   loadData();
