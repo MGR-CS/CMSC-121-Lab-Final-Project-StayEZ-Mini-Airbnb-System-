@@ -265,7 +265,7 @@ async function apiUpdateBookingStatus(id, status) {
 // renderFavorites() in index.html to call apiFetch("/favorites", ...) instead.
 
 /**
- * Get all of host's favorites
+ * Get all of guest's favorites
  * GET /api/favorites
  *
  * @returns {Promise<Array>}
@@ -283,6 +283,19 @@ async function apiGetFavorites() {
 async function apiAddFavorite(listingId) {
   return apiFetch(`/favorites/${listingId}`, {
     method: "POST",
+    body: { listingId },
+  });
+}
+
+/**
+ * Delete to user's favorites a listing by their Id
+ * DELETE /api/favorites/${listingId}
+ *
+ * @returns {Promise<Array>}
+ */
+async function apiRemoveFavorite(listingId) {
+  return apiFetch(`/favorites/${listingId}`, {
+    method: "DELETE",
     body: { listingId },
   });
 }

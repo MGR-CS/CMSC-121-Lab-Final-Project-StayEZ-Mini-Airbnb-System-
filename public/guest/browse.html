@@ -153,7 +153,7 @@
     renderGrid();
   }
 
-  function renderGrid() {
+  async function renderGrid() {
     const grid = document.getElementById('listings-grid');
     if (currentListings.length === 0) {
       grid.innerHTML = `
@@ -168,8 +168,7 @@
       return;
     }
 
-    // TODO: Favorites backend check. Using localStorage stub for now.
-    const favs = JSON.parse(localStorage.getItem('stayez_favorites_' + getUser()._id) || '[]');
+    const favs = await apiGetFavorites();
 
     grid.innerHTML = currentListings.map(listing => {
       const isFav = favs.includes(listing._id);
@@ -209,20 +208,19 @@
   }
 
   // ─── Favorites (localStorage stub) ───
-  function toggleFav(id, btnElement) {
-    const userId = getUser()._id;
-    let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+  async function toggleFav(id, btnElement) {
+    let favs = await apiGetFavorites();
     if (favs.includes(id)) {
       favs = favs.filter(f => f !== id);
       btnElement.classList.remove('liked');
       btnElement.innerHTML = '<i class="far fa-heart"></i>';
+      await apiRemoveFavorite(id);
     } else {
-      favs.push(id);
+      await apiAddFavorite(id);
       btnElement.classList.add('liked');
       btnElement.innerHTML = '<i class="fas fa-heart"></i>';
       showToast('Added to favorites', 'success');
     }
-    localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
   }
 
   // ─── Detail Modal & Booking ───

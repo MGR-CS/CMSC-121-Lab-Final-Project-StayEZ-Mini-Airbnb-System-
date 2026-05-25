@@ -32,8 +32,7 @@
     grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(3);
 
     // TODO: Backend integration — wait for /api/favorites endpoint
-    const userId = getUser()._id;
-    const favIds = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+    const favIds = await apiGetFavorites();
 
     if (favIds.length === 0) {
       grid.innerHTML = `
