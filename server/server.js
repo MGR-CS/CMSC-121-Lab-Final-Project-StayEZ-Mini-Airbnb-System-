@@ -1,4 +1,4 @@
-require("dotenv").config({ path: require('path').resolve(__dirname, './.env') });
+require("dotenv").config({ path: require('path').resolve('./.env') });
 
 console.log("Current Working Directory:", process.cwd());
 console.log("Database URI from env:", process.env.MONGO_URI);
