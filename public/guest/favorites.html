@@ -61,7 +61,7 @@
     grid.innerHTML = favListings.map(listing => `
       <div class="listing-card" onclick="window.location.href='/guest/browse.html'" style="cursor:pointer;">
         <div class="listing-image">
-          <img src="${listing.image}" onerror="this.src='https://via.placeholder.com/500x300'"/>
+          <img src="${listing.image}" onerror="this.src='noImage.png'"/>
           <button class="heart-btn liked" onclick="event.stopPropagation(); removeFav('${listing._id}')">
             <i class="fas fa-heart"></i>
           </button>

@@ -175,7 +175,7 @@
       return `
         <div class="listing-card" onclick="openDetail('${listing._id}')" style="cursor:pointer;">
           <div class="listing-image">
-            <img src="${listing.image}" alt="${listing.name}" onerror="this.src='https://via.placeholder.com/500x300?text=No+Image'"/>
+            <img src="${listing.image}" alt="${listing.name}" onerror="this.src='noImage.png'"/>
             <button class="heart-btn ${isFav ? 'liked' : ''}" onclick="event.stopPropagation(); toggleFav('${listing._id}', this)">
               <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
             </button>

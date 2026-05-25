@@ -149,7 +149,7 @@
     grid.innerHTML = myListings.map(listing => `
       <div class="listing-card">
         <div class="listing-image" style="height:180px;">
-          <img src="${listing.image}" onerror="this.onerror=null; this.src='https://via.placeholder.com/500x300';"/>
+          <img src="${listing.image}" onerror="this.onerror=null; this.src='NoImage.png';"/>
         </div>
         <div style="padding:20px;display:flex;flex-direction:column;flex:1;">
           <div style="display:inline-block;padding:2px 8px;background:var(--brand-light);color:var(--brand-dark);border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;margin-bottom:8px;align-self:flex-start;">${listing.type}</div>
