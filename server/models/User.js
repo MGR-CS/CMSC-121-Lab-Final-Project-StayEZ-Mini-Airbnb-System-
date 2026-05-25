@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
       enum: ["guest", "host", "admin"],
       default: "guest",
     },
+    favorites: {
+        type: [String],
+        default: [],
+    }
   },
   { timestamps: true }
 );
