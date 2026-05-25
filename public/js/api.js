@@ -252,18 +252,6 @@ async function apiUpdateBookingStatus(id, status) {
   });
 }
 
-// ─── RATINGS  (localStorage-only stub) ───────────────────────────────────────
-// TODO: Backend integration — implement GET/POST /api/ratings
-// The frontend ratings UI reads/writes directly to localStorage for now.
-// Backend devs: wire up these routes and update renderRatings() / submitRating()
-// in index.html to call apiFetch("/ratings", ...) instead.
-
-// ─── FAVORITES  (localStorage-only stub) ─────────────────────────────────────
-// TODO: Backend integration — implement GET/POST/DELETE /api/favorites
-// The frontend favorites UI reads/writes directly to localStorage for now.
-// Backend devs: wire up these routes and update toggleWishlist() /
-// renderFavorites() in index.html to call apiFetch("/favorites", ...) instead.
-
 /**
  * Get all of guest's favorites
  * GET /api/favorites
@@ -300,4 +288,44 @@ async function apiRemoveFavorite(listingId) {
   });
 }
 
+/**
+ * Gets all ratings (ngl bad idea, but it works for now)
+ * GET /api/favorites
+ *
+ * @returns {Promise<Array>}
+ */
+async function apiGetAllRatings() {
+  return apiFetch("/ratings");
+}
+
+/**
+ * Gets guest's ratings
+ * GET /api/favorites
+ *
+ * @returns {Promise<Array>}
+ */
+async function apiGetMyRatings() {
+  return apiFetch("/ratings/my");
+}
+
+/**
+ * Submit or update a property review
+ * POST /api/ratings
+ * @param {Object} data - { bookingId, stars, comment }
+ */
+async function apiSubmitRating(data) {
+  return apiFetch("/ratings", {
+    method: "POST",
+    body: data
+  });
+}
+
+/**
+ * Submit or update a property review
+ * POST /api/ratings
+ * @param {Object} data - { bookingId, stars, comment }
+ */
+async function apiGetMyRatingsHost() {
+  return apiFetch("/ratings/host");
+}
 
