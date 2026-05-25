@@ -17,16 +17,21 @@ const generateToken = (id) => {
  * @access  Public
  */
 router.post("/register", async (req, res) => {
+  let finalRole;
   try {
-    const { name, email, password } = req.body;
+    const {name, email, password, role} = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Please enter all required fields" });
+      return res.status(400).json({message: "Please enter all required fields"});
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({email});
     if (userExists) {
-      return res.status(400).json({ message: "User with this email already exists" });
+      return res.status(400).json({message: "User with this email already exists"});
+    }
+
+    if (role === "guest" || role === "host") {
+      finalRole = role;
     }
 
     // NOTE: role is intentionally NOT taken from req.body (mahhack tayo sir)
@@ -36,9 +41,10 @@ router.post("/register", async (req, res) => {
       name,
       email,
       password,
+      role: finalRole,
     });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({id: user._id}, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
@@ -50,7 +56,7 @@ router.post("/register", async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({message: error.message});
   }
 });
 
