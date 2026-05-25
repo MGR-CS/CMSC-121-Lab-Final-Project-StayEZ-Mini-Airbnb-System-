@@ -18,7 +18,7 @@ const generateToken = (id) => {
  */
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "Please enter all required fields" });
@@ -29,12 +29,14 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User with this email already exists" });
     }
 
+    // NOTE: role is intentionally NOT taken from req.body (mahhack tayo sir)
+    // All self-registered users are "guest" by default
+    // Roles (host, admin) are assigned by an admin via /api/admin/users/:id/role (as it should)
     const user = await User.create({
-      name: name,
-      email: email,
-      password: password,
-      role: role
-    })
+      name,
+      email,
+      password,
+    });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
@@ -44,7 +46,7 @@ router.post("/register", async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role, // Defaults to "guest" automatically!
+      role: user.role,
       token,
     });
   } catch (error) {
@@ -61,7 +63,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     // Find a user with this email
-    const user = await User.findOne({email})
+    const user = await User.findOne({ email })
 
     // If user not found, invalid
     if (!user) {

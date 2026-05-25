@@ -67,9 +67,12 @@ router.get("/host", protect, authorize("host"), async (req, res) => {
  */
 router.get("/", protect, authorize("admin"), async (req, res) => {
   try {
-    // TODO: Return all bookings, populate listing and guest info
+    const bookings = await Booking.find()
+      .populate("guestId", "name email")
+      .populate("listingId", "name location price hostId")
+      .lean();
 
-    res.status(200).json({ message: "TODO: return all bookings" });
+    res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -135,7 +138,7 @@ router.post("/", protect, authorize("guest"), async (req, res) => {
  * @desc    Approve or reject a booking (host only)
  * @access  Private - Host
  */
-router.put("/:id/status", protect, authorize("host"), async (req, res) => {
+router.put("/:id/status", protect, authorize("host", "admin"), async (req, res) => {
   try {
     const { status } = req.body; // expected: "approved" or "rejected"
     const id = req.params.id;
