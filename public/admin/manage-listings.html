@@ -71,15 +71,17 @@
   async function loadDashboard() {
     let listings = [];
     let bookings = [];
-    let users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+    let users = [];
 
     try {
       listings = await apiGetListings();
       bookings = await apiGetAllBookings();
+      users = await apiGetAllUsers();
     } catch (e) {
       console.warn("API failed, falling back to mock data", e);
       listings = JSON.parse(localStorage.getItem('stayez_listings') || '[]');
       bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+      users = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
     }
 
     const volume = bookings.filter(b => b.status === 'approved').reduce((sum, b) => sum + (b.totalPrice || 0), 0);

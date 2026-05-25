@@ -145,6 +145,10 @@ async function apiGetListings(params = {}) {
   return apiFetch("/listings" + (qs ? "?" + qs : ""));
 }
 
+async function apiGetAllUsers(params = {}) {
+    return apiFetch("/admin/users"); 
+}
+
 /**
  * Fetch all listings owned by the currently logged-in host.
  * GET /api/listings   (then filter client-side by hostId, since no /my route exists)

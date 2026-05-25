@@ -40,13 +40,13 @@
 
   // TODO: Backend integration - Wait for GET /api/users endpoint
   // Fallback:
-  function loadUsers() {
+  async function loadUsers() {
     const tbody = document.getElementById('admin-users-tbody');
     let users = [];
     
     // We try to pull from localstorage since there's no API yet
     try {
-      users = JSON.parse(localStorage.getItem('stayez_users') || '[]');
+      users = await apiGetAllUsers();
       
       // If mock is completely empty (no localStorage users, simulate some)
       if (users.length === 0) {
