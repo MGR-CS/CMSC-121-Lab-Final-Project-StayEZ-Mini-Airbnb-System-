@@ -70,7 +70,7 @@
     bookings.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
 
     container.innerHTML = bookings.map(booking => {
-      const listing = listingsMap[booking.listingId._id || booking.listingId] || { name: 'Unknown Listing', location: 'Unknown', image: 'https://via.placeholder.com/150' };
+      const listing = listingsMap[booking.listingId._id || booking.listingId] || { name: 'Unknown Listing', location: 'Unknown', image: 'noImage.png' };
       const statusBadge = {
         pending:  '<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending Approval</span>',
         approved: '<span class="badge badge-approved"><i class="fas fa-check"></i> Confirmed</span>',
@@ -94,6 +94,8 @@
             <div style="display:flex;justify-content:space-between;align-items:flex-end;">
               <div style="display:flex;gap:32px;">
                 <div>
+                  <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Total</p>
+                  <p style="font-weight:600;margin:0;color:var(--gray-900);">$${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}</p>
                   <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Dates</p>
                   <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${booking.startDate} → ${booking.endDate} <span style="color:var(--gray-500);font-weight:400;">(${nights} night${nights>1?'s':''})</span></p>
                 </div>

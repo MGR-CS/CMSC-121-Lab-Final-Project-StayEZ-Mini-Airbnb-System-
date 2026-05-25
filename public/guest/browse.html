@@ -21,6 +21,7 @@
     </div>
     
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      
       <select id="filter-type" style="width:160px;padding:10px 14px;" onchange="applyFilters()">
         <option value="">All Types</option>
         <option value="villa">Villas</option>
@@ -197,7 +198,7 @@
     const search = document.getElementById('search-input').value;
     const type = document.getElementById('filter-type').value;
     const sort = document.getElementById('sort-price').value;
-    loadListings({ search, type, sort });
+    loadListings({ search, search, type, sort });
   }
 
   function clearFilters() {
