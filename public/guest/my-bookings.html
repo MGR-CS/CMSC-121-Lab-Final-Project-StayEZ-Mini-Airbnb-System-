@@ -74,7 +74,7 @@
       const statusBadge = {
         pending:  '<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending Approval</span>',
         approved: '<span class="badge badge-approved"><i class="fas fa-check"></i> Confirmed</span>',
-        rejected: '<span class="badge badge-rejected"><i class="fas fa-times"></i> Cancelled</span>'
+        rejected: '<span class="badge badge-rejected"><i class="fas fa-times"></i> Rejected</span>'
       }[booking.status];
       
       const nights = Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000*60*60*24));
@@ -95,9 +95,11 @@
               <div style="display:flex;gap:32px;">
                 <div>
                   <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Total</p>
-                  <p style="font-weight:600;margin:0;color:var(--gray-900);">$${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}</p>
+                  <p style="font-weight:600;margin:0;color:var(--gray-900);">₱${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}</p>
                   <p style="font-size:12px;color:var(--gray-500);text-transform:uppercase;font-weight:700;margin:0 0 4px;">Dates</p>
-                  <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${booking.startDate} → ${booking.endDate} <span style="color:var(--gray-500);font-weight:400;">(${nights} night${nights>1?'s':''})</span></p>
+                  <p style="font-size:14px;font-weight:600;color:var(--gray-900);margin:0;">${new Date(booking.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} → 
+                    ${new Date(booking.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </p>
                 </div>
                 ${booking.status === 'approved' && listing.contactNumber ? `
                 <div>

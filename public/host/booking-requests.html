@@ -120,13 +120,15 @@
           </td>
           <td><p style="font-weight:600;margin:0;">${listing.name}</p></td>
           <td>
-            <p style="margin:0 0 2px;font-size:13px;"><i class="fas fa-calendar-alt" style="color:var(--brand);margin-right:4px;"></i>${booking.startDate}</p>
-            <p style="margin:0;font-size:13px;color:var(--gray-500);">to ${booking.endDate}</p>
+            <p style="margin:0 0 2px;font-size:13px;"><i class="fas fa-calendar-alt" style="color:var(--brand);margin-right:4px;"></i>${
+              new Date(booking.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+              }</p>
+            <p style="margin:0;font-size:13px;color:var(--gray-500);">to ${new Date(booking.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
           </td>
 
           <td>
             <p style="font-weight:600;margin:0;color:var(--gray-900);">
-              $${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}
+              ₱${booking.totalPrice ? Number(booking.totalPrice).toLocaleString() : '0'}
             </p>
           </td>
 

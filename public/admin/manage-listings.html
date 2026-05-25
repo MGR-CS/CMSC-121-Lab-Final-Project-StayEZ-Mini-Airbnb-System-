@@ -89,7 +89,7 @@
     document.getElementById('dash-total-listings').textContent = listings.length;
     document.getElementById('dash-total-bookings').textContent = bookings.length;
     document.getElementById('dash-total-users').textContent = users.length;
-    document.getElementById('dash-total-revenue').textContent = '$' + volume.toLocaleString();
+    document.getElementById('dash-total-revenue').textContent = '₱' + volume.toLocaleString();
 
     // Recent Bookings (top 5)
     const recentB = [...bookings].reverse().slice(0, 5);
@@ -105,7 +105,7 @@
     const recentL = [...listings].reverse().slice(0, 5);
     document.getElementById('dash-recent-listings').innerHTML = recentL.length === 0
       ? '<tr><td style="text-align:center;color:var(--gray-500);">No listings yet</td></tr>'
-      : recentL.map(l => `<tr><td><b>${l.name}</b></td><td>${l.type}</td><td style="text-align:right;font-weight:600;">$${l.price}</td></tr>`).join('');
+      : recentL.map(l => `<tr><td><b>${l.name}</b></td><td>${l.type}</td><td style="text-align:right;font-weight:600;">₱${l.price}</td></tr>`).join('');
   }
 
   loadDashboard();

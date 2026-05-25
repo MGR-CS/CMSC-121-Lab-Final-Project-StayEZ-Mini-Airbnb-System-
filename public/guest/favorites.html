@@ -19,7 +19,73 @@
   </div>
 
   <div id="favorites-grid" class="listing-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:24px;">
-    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<div id="detail-modal" class="modal-overlay" onclick="if(event.target===this) closeDetailModal()">
+  <div class="modal-content" style="width:100%;max-width:860px;display:flex;flex-direction:column;max-height:90vh;position:relative;">
+    <button onclick="closeDetailModal()" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.9);border:none;cursor:pointer;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.1);"><i class="fas fa-times"></i></button>
+    
+    <div style="display:flex;flex-wrap:wrap;height:100%;overflow-y:auto;">
+      <div style="flex:1;min-width:320px;border-right:1px solid var(--gray-100);">
+        <div style="width:100%;height:320px;background:var(--gray-200);">
+          <img id="detail-img" src="" style="width:100%;height:100%;object-fit:cover;" onerror="src='noImage.png'" />
+        </div>
+        <div style="padding:32px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div>
+              <div style="display:inline-block;padding:4px 10px;background:var(--brand-light);color:var(--brand-dark);border-radius:6px;font-size:12px;font-weight:700;text-transform:uppercase;margin-bottom:12px;" id="detail-type"></div>
+              <h2 id="detail-name" style="font-size:24px;font-weight:800;color:var(--gray-900);margin:0 0 8px;font-family:'DM Serif Display',serif;"></h2>
+              <p style="color:var(--gray-500);font-size:15px;margin:0;"><i class="fas fa-map-marker-alt" style="margin-right:6px;"></i><span id="detail-loc"></span></p>
+            </div>
+          </div>
+          
+          <div style="padding:20px 0;border-top:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100);margin-bottom:24px;display:flex;gap:24px;">
+            <div>
+              <p style="font-size:13px;color:var(--gray-500);margin:0 0 4px;">Host</p>
+              <p style="font-size:15px;font-weight:600;color:var(--gray-900);margin:0;"><i class="fas fa-user-circle" style="margin-right:6px;color:var(--brand);"></i><span id="detail-host"></span></p>
+            </div>
+          </div>
+          
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">About this place</h3>
+          <p id="detail-desc" style="font-size:15px;color:var(--gray-600);line-height:1.7;margin-bottom:24px;"></p>
+        </div>
+      </div>
+      
+      <div style="width:360px;padding:32px;background:var(--gray-50);display:flex;flex-direction:column;">
+        <div style="background:white;padding:24px;border-radius:16px;border:1px solid var(--gray-200);box-shadow:0 12px 24px rgba(0,0,0,0.04);position:sticky;top:32px;">
+          <div style="margin-bottom:24px;">
+            <span id="detail-price" style="font-size:32px;font-weight:800;color:var(--gray-900);"></span>
+            <span style="font-size:15px;color:var(--gray-500);">/ night</span>
+          </div>
+          
+          <div style="border:1px solid var(--gray-300);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+            <div style="padding:12px;border-bottom:1px solid var(--gray-300);">
+              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-900);margin-bottom:4px;">Check-in</label>
+              <input type="date" id="book-start" style="border:none;padding:0;background:transparent;width:100%;font-size:14px;color:var(--gray-700);outline:none;box-shadow:none;" onchange="calculateTotal()" min=""/>
+            </div>
+            <div style="padding:12px;">
+              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-900);margin-bottom:4px;">Check-out</label>
+              <input type="date" id="book-end" style="border:none;padding:0;background:transparent;width:100%;font-size:14px;color:var(--gray-700);outline:none;box-shadow:none;" onchange="calculateTotal()" min=""/>
+            </div>
+          </div>
+          
+          <div id="booking-summary" style="display:none;margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:15px;color:var(--gray-600);">
+              <span id="calc-nights-text"></span>
+              <span id="calc-nights-price"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding-top:16px;border-top:1px solid var(--gray-200);margin-top:16px;font-size:16px;font-weight:700;color:var(--gray-900);">
+              <span>Total</span>
+              <span id="calc-total"></span>
+            </div>
+          </div>
+          
+          <button id="book-btn" onclick="submitBooking()" class="btn btn-primary" style="width:100%;height:48px;font-size:16px;">Reserve</button>
+          <p style="text-align:center;font-size:13px;color:var(--gray-500);margin-top:16px;">You won't be charged yet</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -27,11 +93,18 @@
   requireAuth('guest');
   renderHeader('favorites');
 
+  let currentListings = [];
+  let selectedListing = null;
+
+  // Restrict calendar configurations to current date and onwards
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('book-start').min = today;
+  document.getElementById('book-end').min = today;
+
   async function loadFavorites() {
     const grid = document.getElementById('favorites-grid');
     grid.innerHTML = '<div class="listing-card skeleton" style="height:320px;"></div>'.repeat(3);
 
-    // TODO: Backend integration — wait for /api/favorites endpoint
     const favIds = await apiGetFavorites();
 
     if (favIds.length === 0) {
@@ -56,9 +129,10 @@
     }
 
     const favListings = listings.filter(l => favIds.includes(l._id));
+    currentListings = favListings;
 
     grid.innerHTML = favListings.map(listing => `
-      <div class="listing-card" onclick="window.location.href='/guest/browse.html'" style="cursor:pointer;">
+      <div class="listing-card" onclick="openDetail('${listing._id}')" style="cursor:pointer;">
         <div class="listing-image">
           <img src="${listing.image}" onerror="this.src='noImage.png'"/>
           <button class="heart-btn liked" onclick="event.stopPropagation(); removeFav('${listing._id}')">
@@ -69,7 +143,7 @@
           <h3 style="font-size:16px;font-weight:700;color:var(--gray-900);margin:0 0 8px;">${listing.name}</h3>
           <p style="font-size:14px;color:var(--gray-500);margin:0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>${listing.location}</p>
           <div style="margin-top:auto;padding-top:16px;border-top:1px solid var(--gray-100);">
-            <span style="font-size:18px;font-weight:800;color:var(--gray-900);">$${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span>
+            <span style="font-size:18px;font-weight:800;color:var(--gray-900);">₱${listing.price}</span><span style="font-size:13px;color:var(--gray-500);"> / night</span>
           </div>
         </div>
       </div>`).join('');
@@ -82,6 +156,114 @@
     localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
     showToast('Removed from favorites', 'success');
     loadFavorites(); // re-render
+  }
+  function openDetail(id) {
+    selectedListing = currentListings.find(l => l._id === id);
+    if (!selectedListing) return;
+    
+    document.getElementById('detail-img').src = selectedListing.image;
+    document.getElementById('detail-type').textContent = selectedListing.type;
+    document.getElementById('detail-name').textContent = selectedListing.name;
+    document.getElementById('detail-loc').textContent = selectedListing.location;
+    document.getElementById('detail-host').textContent = selectedListing.hostId?.name || selectedListing.hostId || 'Unknown Host';
+    document.getElementById('detail-desc').textContent = selectedListing.description;
+    document.getElementById('detail-price').textContent = '₱' + selectedListing.price;
+    
+    // Reset layout fields
+    document.getElementById('book-start').value = '';
+    document.getElementById('book-end').value = '';
+    document.getElementById('booking-summary').style.display = 'none';
+    
+    document.getElementById('detail-modal').classList.add('open');
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detail-modal').classList.remove('open');
+    selectedListing = null;
+  }
+
+  function calculateTotal() {
+    if (!selectedListing) return;
+    const start = document.getElementById('book-start').value;
+    const end = document.getElementById('book-end').value;
+    const summary = document.getElementById('booking-summary');
+    
+    if (start && end) {
+      const d1 = new Date(start);
+      const d2 = new Date(end);
+      if (d2 <= d1) {
+        document.getElementById('book-end').value = '';
+        summary.style.display = 'none';
+        showToast('Check-out must be after check-in', 'warning');
+        return;
+      }
+      const nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      const total = nights * selectedListing.price;
+      
+      document.getElementById('calc-nights-text').textContent = `₱${selectedListing.price} x ${nights} night${nights>1?'s':''}`;
+      document.getElementById('calc-nights-price').textContent = '₱' + total;
+      document.getElementById('calc-total').textContent = '₱' + total;
+      summary.style.display = 'block';
+    } else {
+      summary.style.display = 'none';
+    }
+  }
+
+  async function submitBooking() {
+    if (!selectedListing) return;
+    const startDate = document.getElementById('book-start').value;
+    const endDate = document.getElementById('book-end').value;
+    
+    if (!startDate || !endDate) {
+      showToast('Please select dates', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('book-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+    try {
+      await apiCreateBooking({ listingId: selectedListing._id, startDate, endDate });
+      showToast('Booking request sent!', 'success');
+      closeDetailModal();
+    } catch (e) {
+      console.warn("API failed, using mock booking fallback", e);
+      if (e.message.includes("Conflicting schedule")) {
+        showToast("Dates not available", "error");
+      } else {
+        const bookings = JSON.parse(localStorage.getItem('stayez_bookings') || '[]');
+        const conflict = bookings.find(b => 
+          b.listingId === selectedListing._id && 
+          b.status === 'approved' &&
+          b.startDate < endDate && b.endDate > startDate
+        );
+        if (conflict) {
+          showToast('Dates not available', 'error');
+        } else {
+          const d1 = new Date(startDate);
+          const d2 = new Date(endDate);
+          const nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+          const totalPrice = nights * selectedListing.price;
+
+          bookings.push({
+            _id: 'book_' + Date.now(),
+            listingId: selectedListing._id,
+            guestId: getUser()._id,
+            guestName: getUser().name,
+            startDate, endDate,
+            status: 'pending',
+            totalPrice
+          });
+          localStorage.setItem('stayez_bookings', JSON.stringify(bookings));
+          showToast('Booking request sent to host!', 'success');
+          closeDetailModal();
+        }
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Reserve';
+    }
   }
 
   loadFavorites();

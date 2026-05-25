@@ -31,7 +31,7 @@
       <div class="stat-label">Active Bookings</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" id="stat-revenue" style="color:var(--gray-900);">$0</div>
+      <div class="stat-value" id="stat-revenue" style="color:var(--gray-900);">₱0</div>
       <div class="stat-label">Est. Revenue</div>
     </div>
   </div>
@@ -64,7 +64,7 @@
         </select>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Price per Night ($)</label>
+        <label style="font-size:12px;font-weight:700;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px;display:block;">Price per Night (₱)</label>
         <input type="number" id="form-price" min="1"/>
       </div>
       <div style="grid-column:1/-1;">
@@ -126,7 +126,7 @@
 
     document.getElementById('stat-total').textContent = myListings.length;
     document.getElementById('stat-active').textContent = activeBooks.length;
-    document.getElementById('stat-revenue').textContent = '$' + estRev.toLocaleString();
+    document.getElementById('stat-revenue').textContent = '₱' + estRev.toLocaleString();
 
     renderGrid();
   }

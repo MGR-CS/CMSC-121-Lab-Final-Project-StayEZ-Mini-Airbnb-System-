@@ -25,6 +25,7 @@
         <th>Listing</th>
         <th>Guest</th>
         <th>Dates</th>
+        <th>Total</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -82,7 +83,15 @@
           <td><span style="font-family:monospace;color:var(--gray-500);">${b._id}</span></td>
           <td><b>${lName}</b></td>
           <td>${gName}</td>
-          <td>${b.startDate} to ${b.endDate}</td>
+          <td>${new Date(b.startDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })} 
+          to 
+          ${new Date(b.endDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          </td>
+          <td>
+            <p style="font-weight:600;margin:0;color:var(--gray-900);">
+              ₱${b.totalPrice ? Number(b.totalPrice).toLocaleString() : '0'}
+            </p>
+          </td>
           <td>${badge}</td>
         </tr>
       `;

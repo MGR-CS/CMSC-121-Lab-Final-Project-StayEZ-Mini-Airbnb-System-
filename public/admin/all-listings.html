@@ -35,7 +35,7 @@
   </table>
 </div>
 
-<!-- Re-using Listing Modal for Admin -->
+
 <div id="listing-modal" class="modal-overlay" onclick="if(event.target===this) closeListingModal()">
   <div class="modal-content" style="width:100%;max-width:600px;padding:32px;position:relative;">
     <button onclick="closeListingModal()" style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--gray-100);border:none;cursor:pointer;"><i class="fas fa-times"></i></button>
@@ -111,7 +111,7 @@
         <td style="text-transform:capitalize;">${l.type}</td>
         <td>${l.location}</td>
         <td>${l.hostId?.name || l.hostId || 'Unknown'}</td>
-        <td>$${l.price}</td>
+        <td>₱${l.price}</td>
         <td style="text-align:right;">
           <button onclick="openListingModal('${l._id}')" class="btn btn-secondary btn-sm" style="margin-right:8px;"><i class="fas fa-edit"></i> Edit</button>
           <button onclick="deleteListing('${l._id}')" class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;"><i class="fas fa-trash"></i> Delete</button>
