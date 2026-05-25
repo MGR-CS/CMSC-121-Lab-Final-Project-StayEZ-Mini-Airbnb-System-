@@ -263,3 +263,28 @@ async function apiUpdateBookingStatus(id, status) {
 // The frontend favorites UI reads/writes directly to localStorage for now.
 // Backend devs: wire up these routes and update toggleWishlist() /
 // renderFavorites() in index.html to call apiFetch("/favorites", ...) instead.
+
+/**
+ * Get all of host's favorites
+ * GET /api/favorites
+ *
+ * @returns {Promise<Array>}
+ */
+async function apiGetFavorites() {
+  return apiFetch("/favorites");
+}
+
+/**
+ * Add to user's favorites a listing by their Id
+ * POST /api/favorites/${listingId}
+ *
+ * @returns {Promise<Array>}
+ */
+async function apiAddFavorite(listingId) {
+  return apiFetch(`/favorites/${listingId}`, {
+    method: "POST",
+    body: { listingId },
+  });
+}
+
+
