@@ -14,6 +14,7 @@ const listingRoutes = require("./routes/listings");
 const bookingRoutes = require("./routes/bookings");
 const adminRoutes = require("./routes/admin");
 const favoritesRoutes = require("./routes/favorites");
+const ratingsRoutes = require("./routes/ratings");
 
 // --- Connect to MongoDB ---
 connectDB();
@@ -34,6 +35,7 @@ app.use("/api/listings", listingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/favorites", favoritesRoutes)
+app.use("/api/ratings", ratingsRoutes)
 
 // --- Admin user routes (now handled by /api/admin) ---
 
