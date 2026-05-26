@@ -149,6 +149,21 @@ async function apiGetAllUsers(params = {}) {
     return apiFetch("/admin/users"); 
 }
 
+/** Update user role (admin only) */
+async function apiUpdateUserRole(id, role) {
+  return apiFetch(`/admin/users/${id}/role`, {
+    method: "PUT",
+    body: { role }
+  });
+}
+
+/** Delete user and cascade delete listings and bookings (admin only) */
+async function apiDeleteUser(id) {
+  return apiFetch(`/admin/users/${id}`, {
+    method: "DELETE"
+  });
+}
+
 /**
  * Fetch all listings owned by the currently logged-in host.
  * GET /api/listings   (then filter client-side by hostId, since no /my route exists)

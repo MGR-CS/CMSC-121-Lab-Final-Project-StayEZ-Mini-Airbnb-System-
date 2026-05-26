@@ -149,12 +149,18 @@
       </div>`).join('');
   }
 
-  function removeFav(id) {
-    const userId = getUser()._id;
-    let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
-    favs = favs.filter(f => f !== id);
-    localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
-    showToast('Removed from favorites', 'success');
+  async function removeFav(id) {
+    try {
+      await apiRemoveFavorite(id);
+      showToast('Removed from favorites', 'success');
+    } catch (e) {
+      console.warn("API remove favorite failed, using local fallback", e);
+      const userId = getUser()._id;
+      let favs = JSON.parse(localStorage.getItem('stayez_favorites_' + userId) || '[]');
+      favs = favs.filter(f => f !== id);
+      localStorage.setItem('stayez_favorites_' + userId, JSON.stringify(favs));
+      showToast('Removed from favorites (Mock)', 'success');
+    }
     loadFavorites(); // re-render
   }
   function openDetail(id) {
