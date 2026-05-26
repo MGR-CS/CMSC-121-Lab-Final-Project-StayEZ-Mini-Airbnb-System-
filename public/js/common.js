@@ -13,49 +13,76 @@ function renderHeader(activeViewId = '') {
   const user = getUser(); // from api.js
   const headerHtml = `
     <header style="background: white; border-bottom: 1px solid var(--gray-100); position: sticky; top: 0; z-index: 40; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); display: flex; height: 64px; align-items: center; justify-content: space-between; padding: 0 24px;">
-      <div style="display:flex; align-items:center; gap: 24px; flex: 1;">
-        <!-- Logo -->
-        <a href="/" style="text-decoration:none; font-size: 24px; color: var(--gray-900); letter-spacing: -0.025em; font-weight: 700; user-select: none; cursor: pointer;" class="font-serif" title="Go to home">
-          Stay<span style="color:var(--brand)">EZ</span>
-        </a>
-        
-        <!-- Main Nav -->
-        <nav id="main-nav" style="display:flex; gap: 24px; align-items: center; font-size: 14px;">
-          ${buildNavLinks(user, activeViewId)}
-        </nav>
-      </div>
-
-      <!-- Right Actions -->
-      <div style="display:flex; align-items:center; gap: 12px; flex-shrink: 0;">
-        ${buildUserActions(user)}
+      <a href="/" style="text-decoration:none; font-size: 24px; color: var(--gray-900); letter-spacing: -0.025em; font-weight: 700; user-select: none; cursor: pointer;" class="font-serif" title="Go to home">
+        Stay<span style="color:var(--brand)">EZ</span>
+      </a>
+      
+      <div style="position: relative; display: inline-block;">
+        ${buildUserDropdown(user, activeViewId)}
       </div>
     </header>
   `;
   document.body.insertAdjacentHTML('afterbegin', headerHtml);
 }
 
-function buildNavLinks(user, activeViewId) {
+function buildUserDropdown(user, activeViewId) {
   if (!user) return '';
+  const cfg = ROLE_BADGE_CONFIG[user.role];
+
+  return `
+    <button id="nav-dropdown-btn" style="background: white; border: 1px solid var(--gray-200); padding: 6px 14px; border-radius: 99px; cursor: pointer; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.2s;" onmouseover="this.style.borderColor='var(--gray-300)'" onmouseout="this.style.borderColor='var(--gray-200)'">
+      <i class="fas fa-bars" style="color: var(--gray-600); font-size: 14px;"></i>
+      <div style="display:inline-flex; align-items:center; gap:6px; background:${cfg.bg}; color:${cfg.color}; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:600;">
+        <i class="fas ${cfg.icon}"></i> ${cfg.label}
+      </div>
+    </button>
+    
+    <div id="nav-dropdown-content" style="display: none; position: absolute; right: 0; top: 125%; background: white; min-width: 220px; border: 1px solid var(--gray-100); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 100; overflow: hidden; padding: 6px 0;">
+      <div style="padding: 8px 16px 4px; font-size: 11px; color: var(--gray-400); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
+        Manage Account
+      </div>
+      
+      ${buildDropdownLinks(user, activeViewId)}
+      
+      <hr style="border: 0; border-top: 1px solid var(--gray-100); margin: 6px 0;">
+      
+      <button onclick="handleLogout()" style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; color: #EF4444; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.15s;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='none'">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  `;
+}
+
+function buildDropdownLinks(user, activeViewId) {
   const links = [];
-  const add = (id, url, label, iconHtml = '') => {
-    const active = id === activeViewId ? 'active-link' : '';
-    links.push(`<a href="${url}" class="nav-link ${active}">${iconHtml}${label}</a>`);
+  const add = (id, url, label, iconHtml) => {
+    const isActive = id === activeViewId;
+    const itemStyle = isActive 
+      ? 'background-color: var(--gray-50); font-weight: 600; color: var(--brand);' 
+      : 'color: var(--gray-700);';
+      
+    links.push(`
+      <a href="${url}" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; text-decoration: none; font-size: 14px; ${itemStyle} transition: background 0.15s;" onmouseover="this.style.backgroundColor='var(--gray-50)'" onmouseout="this.style.backgroundColor='${isActive ? 'var(--gray-50)' : 'transparent'}'">
+        <div style="width: 16px; text-align: center; display: flex; justify-content: center; align-items: center;">${iconHtml}</div>
+        <span>${label}</span>
+      </a>
+    `);
   };
 
   if (user.role === 'guest') {
-    add('browse', '/guest/browse.html', 'Browse');
-    add('my-bookings', '/guest/my-bookings.html', 'My Bookings');
-    add('ratings', '/guest/ratings.html', 'Ratings', '<i class="fas fa-star" style="font-size:11px;margin-right:4px;color:#F59E0B;"></i>');
-    add('favorites', '/guest/favorites.html', 'Favorites', '<i class="fas fa-heart" style="font-size:11px;margin-right:4px;color:#EF4444;"></i>');
+    add('browse', '/guest/browse.html', 'Browse', '<i class="fas fa-search" style="font-size:13px;"></i>');
+    add('my-bookings', '/guest/my-bookings.html', 'My Bookings', '<i class="fas fa-suitcase" style="font-size:13px;"></i>');
+    add('ratings', '/guest/ratings.html', 'Ratings', '<i class="fas fa-star" style="font-size:13px;color:#F59E0B;"></i>');
+    add('favorites', '/guest/favorites.html', 'Favorites', '<i class="fas fa-heart" style="font-size:13px;color:#EF4444;"></i>');
   } else if (user.role === 'host') {
-    add('my-listings', '/host/my-listings.html', 'My Properties');
-    add('booking-requests', '/host/booking-requests.html', 'Booking Requests');
-    add('ratings', '/host/ratings.html', 'Ratings', '<i class="fas fa-star" style="font-size:11px;margin-right:4px;color:#F59E0B;"></i>');
+    add('my-listings', '/host/my-listings.html', 'My Properties', '<i class="fas fa-home" style="font-size:13px;"></i>');
+    add('booking-requests', '/host/booking-requests.html', 'Booking Requests', '<i class="fas fa-calendar-check" style="font-size:13px;"></i>');
+    add('ratings', '/host/ratings.html', 'Ratings', '<i class="fas fa-star" style="font-size:13px;color:#F59E0B;"></i>');
   } else if (user.role === 'admin') {
-    add('dashboard', '/admin/manage-listings.html', 'Dashboard', '<i class="fas fa-tachometer-alt" style="margin-right:5px;font-size:11px;"></i>');
-    add('all-listings', '/admin/all-listings.html', 'All Listings', '<i class="fas fa-home" style="margin-right:5px;font-size:11px;"></i>');
-    add('all-bookings', '/admin/all-bookings.html', 'All Bookings', '<i class="fas fa-calendar-alt" style="margin-right:5px;font-size:11px;"></i>');
-    add('all-users', '/admin/all-users.html', 'All Users', '<i class="fas fa-users" style="margin-right:5px;font-size:11px;"></i>');
+    add('dashboard', '/admin/manage-listings.html', 'Dashboard', '<i class="fas fa-tachometer-alt" style="font-size:13px;"></i>');
+    add('all-listings', '/admin/all-listings.html', 'All Listings', '<i class="fas fa-building" style="font-size:13px;"></i>');
+    add('all-bookings', '/admin/all-bookings.html', 'All Bookings', '<i class="fas fa-calendar-alt" style="font-size:13px;"></i>');
+    add('all-users', '/admin/all-users.html', 'All Users', '<i class="fas fa-users" style="font-size:13px;"></i>');
   }
   return links.join('');
 }
@@ -78,6 +105,20 @@ function handleLogout() {
   showToast('👋 Logged out successfully', 'success');
   setTimeout(() => window.location.href = '/', 1000);
 }
+
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('#nav-dropdown-btn');
+  const content = document.getElementById('nav-dropdown-content');
+  
+  if (!content) return;
+  
+  if (btn) {
+    const isHidden = content.style.display === 'none' || content.style.display === '';
+    content.style.display = isHidden ? 'block' : 'none';
+  } else if (!e.target.closest('#nav-dropdown-content')) {
+    content.style.display = 'none';
+  }
+});
 
 // ─── UI Utilities ─────────────────────────────────────────────────────────────
 function injectToastContainer() {
