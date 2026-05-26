@@ -13,13 +13,13 @@ listings, and manage bookings
 
 ---
 
-## Team Members
+## Group Members
 
 | Name | Role |
 |------|------|
-| (Arca, Rome) | |
-| (Bautista, Malcolm) | |
-| (De Leon, Chris) | |
+| (Arca, Rome) |Front-end dev|
+| (Bautista, Malcolm) |Front-end dev|
+| (De Leon, Chris) |Back-end dev|
 | (Rites, Mark) | Fullstack developer |
 
 ---
@@ -170,7 +170,7 @@ The app will be available at `http://localhost:3000`.
 | Frontend | HTML, CSS, JavaScript (Fetch API) |
 | Backend | Node.js, Express.js |
 | Database | MongoDB with Mongoose |
-| Auth | JSON Web Tokens (JWT), bcryptjs |
+| Authentication | JSON Web Tokens (JWT), bcryptjs |
 
 
 ---
