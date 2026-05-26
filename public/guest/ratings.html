@@ -40,9 +40,9 @@
     
     <textarea id="rate-comment" placeholder="Tell others about your stay (optional)" style="height:100px;margin-bottom:16px;resize:none;"></textarea>
     
-    <div style="display:flex;gap:12px;">
-      <button onclick="closeRateModal()" class="btn btn-secondary" style="flex:1;">Cancel</button>
-      <button onclick="submitRating()" class="btn btn-primary" style="flex:1;">Submit Review</button>
+    <div class="modal-actions">
+      <button onclick="closeRateModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitRating()" class="btn btn-primary">Submit Review</button>
     </div>
   </div>
 </div>
@@ -51,8 +51,7 @@
   requireAuth('guest');
   renderHeader('ratings');
 
-  // TODO: Backend integration — wait for /api/ratings endpoints
-  // Fallbacks:
+  
   let guestBookings = [];
   let allListings = [];
   let allRatings = [];
