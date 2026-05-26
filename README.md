@@ -1,13 +1,15 @@
 # StayEZ — Mini Airbnb System
 
 > CMSC 121 Final Project | University of the Philippines Manila
-> **Deadline (wag niyo kalimutan mga sir):** May 24, 2026, 11:59 PM | **Presentation:** May 25, 2026, 1–3 PM
+> **Presented on:** May 27, 2026, 10–12nn
 
 ---
 
 ## Overview
 
-(Project Description)
+a simplified Airbnb-like web application. The system
+will simulate a real-world booking platform where users can list properties, search and filter
+listings, and manage bookings
 
 ---
 
@@ -175,6 +177,6 @@ The app will be available at `http://localhost:3000`.
 
 ## Deployment
 
-> TODO: Document deployment steps once with either Railway or Vercel
+> Deployed via vercel
 
 
